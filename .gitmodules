@@ -1,0 +1,3 @@
+[submodule "contracts/chaincash"]
+	path = contracts/chaincash
+	url = git@github.com:ChainCashLabs/chaincash.git
