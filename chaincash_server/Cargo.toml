@@ -11,7 +11,6 @@ hyper = { version = "0.14.27", features = ["full"] }
 tokio = { version = "1", features = ["full"] }
 listenfd = "1.0.1"
 clap = { version = "4.3.23", features = ["derive"] }
-thiserror = "1.0.44"
-tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
 tracing = "0.1.37"
+thiserror = "1.0.44"
 heed = "0.11.0"
