@@ -1,5 +1,6 @@
 [workspace]
 
 members = [
-  "chaincash_server"
+  "chaincash_server",
+  "chaincash_cli"
 ]
