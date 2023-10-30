@@ -25,8 +25,13 @@ erDiagram
         byte[] owner "Encoded group element representing the note owners public key at this point in time"
         int height "Blockchain height the agent came into onwership of the note"
     }
+    SIGNATURE {
+        int id PK
+        int note_id FK
+    }
     NOTE ||--o{ RESERVE : "backed by"
     NOTE ||--|{ OWNERSHIP_ENTRY : "has"
+    NOTE ||--|{ SIGNATURE : "has"
     NOTE ||--|| ERGO_BOX : "is a"
     RESERVE ||--|| ERGO_BOX : "is a"
 ```
