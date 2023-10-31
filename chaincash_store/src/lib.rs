@@ -1,14 +1,48 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
+use database::ConnectionPool;
+
+pub mod database;
+pub mod error;
+
+pub use error::Error;
+
+trait UpgradableStore {
+    fn needs_update(&self) -> Result<bool, Error>;
+    fn update(&self) -> Result<(), Error>;
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+trait Store {
+    fn notes(&self) -> ();
+    fn reserves(&self) -> ();
+}
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+pub struct ChainCashStore {
+    pool: ConnectionPool,
+}
+
+impl ChainCashStore {
+    pub fn open<S: Into<String>>(store_url: S) -> Result<Self, crate::Error> {
+        let pool = database::connect(store_url)?;
+
+        Ok(Self { pool })
+    }
+}
+
+impl UpgradableStore for ChainCashStore {
+    fn needs_update(&self) -> Result<bool, Error> {
+        database::has_pending_migrations(&mut self.pool.get().unwrap())
+    }
+
+    fn update(&self) -> Result<(), Error> {
+        database::run_pending_migrations(&mut self.pool.get().unwrap())
+    }
+}
+
+impl Store for ChainCashStore {
+    fn notes(&self) -> () {
+        todo!()
+    }
+
+    fn reserves(&self) -> () {
+        todo!()
     }
 }
