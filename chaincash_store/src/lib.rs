@@ -5,7 +5,7 @@ pub mod error;
 
 pub use error::Error;
 
-trait UpgradableStore {
+trait Updatable {
     fn needs_update(&self) -> Result<bool, Error>;
     fn update(&self) -> Result<(), Error>;
 }
@@ -27,7 +27,7 @@ impl ChainCashStore {
     }
 }
 
-impl UpgradableStore for ChainCashStore {
+impl Updatable for ChainCashStore {
     fn needs_update(&self) -> Result<bool, Error> {
         database::has_pending_migrations(&mut self.pool.get().unwrap())
     }
