@@ -27,10 +27,7 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: fmt
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check --color always
+        run: cargo fmt --all -- --check --color always
       - name: clippy
         uses: actions-rs/clippy-check@v1
         with:
