@@ -1,6 +1,6 @@
 use database::ConnectionPool;
 
-pub mod database;
+pub(crate) mod database;
 pub mod error;
 
 pub use error::Error;
