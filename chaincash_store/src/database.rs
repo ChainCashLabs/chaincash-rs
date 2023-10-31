@@ -3,6 +3,7 @@ use diesel::r2d2::ConnectionManager;
 use diesel::r2d2::Pool;
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 
+#[rustfmt::skip]
 pub(crate) mod schema;
 
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!();
