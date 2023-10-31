@@ -2,6 +2,7 @@
 name = "chaincash_store"
 version = "0.1.0"
 edition = "2021"
+license = "CC0-1.0"
 
 [dependencies]
 diesel = { version = "2.1.3", features = ["sqlite", "r2d2"] }
