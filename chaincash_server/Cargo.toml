@@ -14,3 +14,4 @@ clap = { version = "4.3.23", features = ["derive"] }
 tracing = "0.1.37"
 thiserror = "1.0.44"
 heed = "0.11.0"
+chaincash_store = { path = "../chaincash_store" }

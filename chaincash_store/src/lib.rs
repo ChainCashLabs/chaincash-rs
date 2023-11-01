@@ -1,3 +1,5 @@
+use std::borrow::BorrowMut;
+
 use database::ConnectionPool;
 
 pub(crate) mod database;
@@ -17,6 +19,7 @@ trait Store {
     fn reserves(&self) -> &ReserveService;
 }
 
+#[derive(Clone)]
 pub struct ChainCashStore {
     pool: ConnectionPool,
     notes: NoteService,
@@ -43,11 +46,11 @@ impl ChainCashStore {
 
 impl Update for ChainCashStore {
     fn has_updates(&self) -> Result<bool, Error> {
-        database::has_pending_migrations(&mut self.pool.get().unwrap())
+        database::has_pending_migrations(self.pool.get()?.borrow_mut())
     }
 
     fn update(&self) -> Result<(), Error> {
-        database::run_pending_migrations(&mut self.pool.get().unwrap())
+        database::run_pending_migrations(self.pool.get()?.borrow_mut())
     }
 }
 

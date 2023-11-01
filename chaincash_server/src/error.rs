@@ -11,8 +11,4 @@ pub enum Error {
     /// A [`hyper::Error`] occurred, possibly during server creation.
     #[error("hyper error: {0}")]
     Hyper(#[from] hyper::Error),
-
-    /// A [`kv::Error`] occurred.
-    #[error("kv store error: {0}")]
-    Kv(#[from] crate::kv::Error),
 }

@@ -22,7 +22,6 @@
 
 pub mod app;
 pub mod error;
-pub mod kv;
 
 pub use app::serve_blocking;
 pub use error::Error;

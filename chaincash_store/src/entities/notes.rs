@@ -1,5 +1,6 @@
 use crate::database::ConnectionPool;
 
+#[derive(Clone)]
 pub struct NoteService {
     pool: ConnectionPool,
 }

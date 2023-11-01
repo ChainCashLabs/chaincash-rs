@@ -1,3 +1,4 @@
+use chaincash_store::ChainCashStore;
 use tracing::info;
 
 #[derive(Debug, clap::Args)]
@@ -17,5 +18,14 @@ pub(crate) async fn execute(args: &Args) {
 
     info!("listening on {:?}", listener.local_addr().unwrap());
 
-    chaincash_server::serve_blocking(listener).await.unwrap();
+    let db_path = std::env::current_dir().unwrap().join("chaincash.sqlite");
+
+    std::fs::create_dir_all(&db_path).unwrap();
+    info!("using database path: {}", db_path.display());
+
+    let store = ChainCashStore::open(db_path.to_string_lossy()).unwrap();
+
+    chaincash_server::serve_blocking(listener, store)
+        .await
+        .unwrap();
 }
