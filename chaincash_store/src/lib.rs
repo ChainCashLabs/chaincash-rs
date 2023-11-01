@@ -7,7 +7,7 @@ pub mod error;
 use entities::{notes::NoteService, reserves::ReserveService};
 pub use error::Error;
 
-trait UpdatableStore {
+trait Update {
     fn has_updates(&self) -> Result<bool, Error>;
     fn update(&self) -> Result<(), Error>;
 }
@@ -35,9 +35,13 @@ impl ChainCashStore {
             reserves,
         })
     }
+
+    pub fn open_in_memory() -> Result<Self, Error> {
+        Self::open(":memory:")
+    }
 }
 
-impl UpdatableStore for ChainCashStore {
+impl Update for ChainCashStore {
     fn has_updates(&self) -> Result<bool, Error> {
         database::has_pending_migrations(&mut self.pool.get().unwrap())
     }
