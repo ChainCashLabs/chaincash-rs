@@ -1,34 +1,44 @@
 use database::ConnectionPool;
 
 pub(crate) mod database;
+pub mod entities;
 pub mod error;
 
+use entities::{notes::NoteService, reserves::ReserveService};
 pub use error::Error;
 
-trait Updatable {
-    fn needs_update(&self) -> Result<bool, Error>;
+trait UpdatableStore {
+    fn has_updates(&self) -> Result<bool, Error>;
     fn update(&self) -> Result<(), Error>;
 }
 
 trait Store {
-    fn notes(&self) -> ();
-    fn reserves(&self) -> ();
+    fn notes(&self) -> &NoteService;
+    fn reserves(&self) -> &ReserveService;
 }
 
 pub struct ChainCashStore {
     pool: ConnectionPool,
+    notes: NoteService,
+    reserves: ReserveService,
 }
 
 impl ChainCashStore {
-    pub fn open<S: Into<String>>(store_url: S) -> Result<Self, crate::Error> {
+    pub fn open<S: Into<String>>(store_url: S) -> Result<Self, Error> {
         let pool = database::connect(store_url)?;
+        let notes = NoteService::new(pool.clone());
+        let reserves = ReserveService::new(pool.clone());
 
-        Ok(Self { pool })
+        Ok(Self {
+            pool,
+            notes,
+            reserves,
+        })
     }
 }
 
-impl Updatable for ChainCashStore {
-    fn needs_update(&self) -> Result<bool, Error> {
+impl UpdatableStore for ChainCashStore {
+    fn has_updates(&self) -> Result<bool, Error> {
         database::has_pending_migrations(&mut self.pool.get().unwrap())
     }
 
@@ -38,11 +48,11 @@ impl Updatable for ChainCashStore {
 }
 
 impl Store for ChainCashStore {
-    fn notes(&self) -> () {
-        todo!()
+    fn notes(&self) -> &NoteService {
+        &self.notes
     }
 
-    fn reserves(&self) -> () {
-        todo!()
+    fn reserves(&self) -> &ReserveService {
+        &self.reserves
     }
 }
