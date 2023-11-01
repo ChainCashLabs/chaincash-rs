@@ -9,12 +9,12 @@ pub mod error;
 use entities::{notes::NoteService, reserves::ReserveService};
 pub use error::Error;
 
-trait Update {
+pub trait Update {
     fn has_updates(&self) -> Result<bool, Error>;
     fn update(&self) -> Result<(), Error>;
 }
 
-trait Store {
+pub trait Store {
     fn notes(&self) -> &NoteService;
     fn reserves(&self) -> &ReserveService;
 }
