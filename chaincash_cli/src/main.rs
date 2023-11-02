@@ -7,7 +7,7 @@ use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[derive(Debug, Subcommand)]
-enum Commands {
+enum Command {
     /// Runs the chaincash server
     Run(run::Args),
 }
@@ -17,7 +17,7 @@ enum Commands {
 #[command(propagate_version = true)]
 struct Cli {
     #[command(subcommand)]
-    command: Commands,
+    command: Command,
 
     /// The level of logging to use for the server
     #[clap(long, global = true, default_value = tracing::Level::INFO.as_str())]
@@ -44,7 +44,7 @@ impl Cli {
         info!("started with {:?}", self);
 
         match &self.command {
-            Commands::Run(args) => run::execute(&args).await,
+            Command::Run(args) => run::execute(&args).await,
         }
     }
 }
