@@ -1,14 +1,11 @@
 //! ChainCash payment server creation and serving.
-use std::sync::{Arc, RwLock};
-
 use axum::{routing::get, Router};
+use chaincash_store::ChainCashStore;
 use tracing::info;
-
-use crate::kv::{HeedKvStore, KvStore};
 
 #[derive(Clone)]
 struct AppState {
-    pub kv: Arc<RwLock<Box<dyn KvStore>>>,
+    pub store: ChainCashStore,
 }
 
 fn make_app() -> Result<Router<AppState>, crate::Error> {
@@ -17,28 +14,13 @@ fn make_app() -> Result<Router<AppState>, crate::Error> {
     Ok(app)
 }
 
-/// Serves the ChainCash payment server on the given listener forever.
-///
-/// # Example
-///
-/// ```
-/// # async fn run() {
-/// use std::net::TcpListener;
-///
-/// let listener = TcpListener::bind("127.0.0.1:3000").unwrap();
-///
-/// chaincash_server::serve_blocking(listener).await.unwrap();
-/// # }
-/// ```
-pub async fn serve_blocking(listener: std::net::TcpListener) -> Result<(), crate::Error> {
-    let db_path = std::env::current_dir()?.join("state.mdb");
-
-    std::fs::create_dir_all(&db_path)?;
-    info!("using database path: {}", db_path.display());
-
-    let state = AppState {
-        kv: Arc::new(RwLock::new(Box::new(HeedKvStore::new(&db_path)?))),
-    };
+/// Serves the ChainCash payment server on the given listener forever
+/// using the supplied chaincash store.
+pub async fn serve_blocking(
+    listener: std::net::TcpListener,
+    store: ChainCashStore,
+) -> Result<(), crate::Error> {
+    let state = AppState { store };
 
     info!("starting server");
 
@@ -58,7 +40,7 @@ mod tests {
 
     fn make_state() -> AppState {
         AppState {
-            kv: Arc::new(RwLock::new(Box::new(crate::kv::InMemoryKvStore::default()))),
+            store: ChainCashStore::open_in_memory().unwrap(),
         }
     }
 

@@ -1,0 +1,5 @@
+CREATE TABLE ergo_boxes (
+  id INTEGER PRIMARY KEY NOT NULL,
+  ergo_id CHAR(32) NOT NULL,
+  bytes BLOB NOT NULL
+);
