@@ -11,3 +11,6 @@ hyper = { version = "0.14.27", features = ["full"] }
 tracing = "0.1.37"
 thiserror = "1.0.44"
 chaincash_store = { path = "../chaincash_store" }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["full"] }
