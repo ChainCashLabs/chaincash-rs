@@ -10,5 +10,6 @@ tracing = "0.1.37"
 clap = { version = "4.3.23", features = ["derive"] }
 listenfd = "1.0.1"
 tokio = { version = "1", features = ["full"] }
+anyhow = "1.0.75"
 chaincash_server = { path = "../chaincash_server" }
 chaincash_store = { path = "../chaincash_store" }
