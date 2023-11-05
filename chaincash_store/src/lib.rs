@@ -9,6 +9,11 @@ pub mod error;
 use entities::{notes::NoteService, reserves::ReserveService};
 pub use error::Error;
 
+#[derive(serde::Deserialize, Debug)]
+pub struct Config {
+    pub url: String,
+}
+
 pub trait Update {
     fn has_updates(&self) -> Result<bool, Error>;
     fn update(&self) -> Result<(), Error>;
