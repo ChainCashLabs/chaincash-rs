@@ -63,4 +63,3 @@ impl ChainCashApp {
         Ok(chaincash_server::serve_blocking(listener, store).await?)
     }
 }
-
