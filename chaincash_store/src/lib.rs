@@ -11,7 +11,7 @@ pub use error::Error;
 
 #[derive(serde::Deserialize, Debug)]
 pub struct Config {
-    url: String,
+    pub url: String,
 }
 
 pub trait Update {
@@ -42,10 +42,6 @@ impl ChainCashStore {
             notes,
             reserves,
         })
-    }
-
-    pub fn from_config(config: &Config) -> Result<Self, Error> {
-        Self::open(&config.url)
     }
 
     pub fn open_in_memory() -> Result<Self, Error> {

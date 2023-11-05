@@ -43,7 +43,7 @@ impl ChainCashApp {
     }
 
     pub async fn run(&self) -> Result<(), Error> {
-        let store = ChainCashStore::from_config(&self.config.store)?;
+        let store = ChainCashStore::open(&self.config.store.url)?;
 
         if store.has_updates()? {
             store.update()?;
