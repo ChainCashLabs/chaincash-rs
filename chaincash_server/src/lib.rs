@@ -25,3 +25,9 @@ pub mod error;
 
 pub use app::serve_blocking;
 pub use error::Error;
+
+#[derive(serde::Deserialize, Debug)]
+pub struct Config {
+    pub url: String,
+    pub port: u16,
+}

@@ -1,7 +1,6 @@
 //! ChainCash server CLI.
-mod run;
-
 use anyhow::Result;
+use chaincash_app::{ChainCashApp, ChainCashConfig};
 use clap::{Parser, Subcommand};
 use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -9,7 +8,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 #[derive(Debug, Subcommand)]
 enum Command {
     /// Runs the chaincash server
-    Run(run::Args),
+    Run,
 }
 
 #[derive(Debug, Parser)]
@@ -44,7 +43,7 @@ impl Cli {
         info!("started with {:?}", self);
 
         match &self.command {
-            Command::Run(args) => run::execute(&args).await,
+            Command::Run => Ok(ChainCashApp::new(ChainCashConfig::new()?).run().await?),
         }
     }
 }

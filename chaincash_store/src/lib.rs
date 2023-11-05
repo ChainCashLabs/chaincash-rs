@@ -9,6 +9,11 @@ pub mod error;
 use entities::{notes::NoteService, reserves::ReserveService};
 pub use error::Error;
 
+#[derive(serde::Deserialize, Debug)]
+pub struct Config {
+    url: String,
+}
+
 pub trait Update {
     fn has_updates(&self) -> Result<bool, Error>;
     fn update(&self) -> Result<(), Error>;
@@ -37,6 +42,10 @@ impl ChainCashStore {
             notes,
             reserves,
         })
+    }
+
+    pub fn from_config(config: &Config) -> Result<Self, Error> {
+        Self::open(&config.url)
     }
 
     pub fn open_in_memory() -> Result<Self, Error> {
