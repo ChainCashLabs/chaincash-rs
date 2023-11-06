@@ -4,5 +4,6 @@ members = [
   "chaincash_server",
   "chaincash_cli",
   "chaincash_store",
-  "chaincash_app"
+  "chaincash_app",
+  "chaincash_predicate"
 ]
