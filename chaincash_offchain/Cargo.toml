@@ -5,3 +5,5 @@ edition = "2021"
 license = "CC0-1.0"
 
 [dependencies]
+once_cell = "1.18.0"
+ergo_lib = { git = "https://github.com/ergoplatform/sigma-rust.git", branch = "master", package = "ergo-lib", features = ["compiler"] }
