@@ -3,11 +3,11 @@ use ergo_lib::ergotree_ir::ergo_tree::ErgoTree;
 use once_cell::sync::Lazy;
 
 static RESERVE_ERGO_TREE: Lazy<ErgoTree> = Lazy::new(|| {
-    let s = include_str!("../../contracts/chaincash/contracts/initial/reserve.es");
+    let s = include_str!("../../contracts/chaincash/contracts/onchain/reserve.es");
     compile(s, Default::default()).unwrap()
 });
 
 static NOTE_ERGO_TREE: Lazy<ErgoTree> = Lazy::new(|| {
-    let s = include_str!("../../contracts/chaincash/contracts/initial/note.es");
+    let s = include_str!("../../contracts/chaincash/contracts/onchain/note.es");
     compile(s, Default::default()).unwrap()
 });
