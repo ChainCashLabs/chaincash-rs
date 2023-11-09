@@ -1,6 +1,6 @@
 //! ChainCash payment server creation and serving.
 use axum::{routing::get, Router};
-use chaincash_offchain::{NodeInterface, TransactionBuilder};
+use chaincash_offchain::{NodeInterface, TransactionService};
 use chaincash_store::ChainCashStore;
 use tokio::signal;
 use tracing::info;
@@ -9,7 +9,7 @@ use tracing::info;
 pub struct ServerState {
     pub store: ChainCashStore,
     pub node: NodeInterface,
-    pub tx_builder: TransactionBuilder,
+    pub tx_service: TransactionService,
 }
 
 pub struct Server;
@@ -65,26 +65,30 @@ async fn shutdown() {
 }
 
 #[cfg(test)]
+impl ServerState {
+    pub fn for_test() -> Self {
+        // node shouldn't be actually used in unit tests
+        let node = NodeInterface::new("hello", "127.0.0.1", "9032").unwrap();
+
+        ServerState {
+            store: ChainCashStore::open_in_memory().unwrap(),
+            node: node.clone(),
+            tx_service: TransactionService::new(node),
+        }
+    }
+}
+
+#[cfg(test)]
 mod tests {
     use hyper::{Body, Request, StatusCode};
     use tower::ServiceExt;
 
     use super::*;
 
-    fn make_state() -> ServerState {
-        let node = NodeInterface::new("", "", "").unwrap();
-
-        ServerState {
-            store: ChainCashStore::open_in_memory().unwrap(),
-            node: node.clone(),
-            tx_builder: TransactionBuilder::new(node),
-        }
-    }
-
     #[tokio::test]
     async fn test_healthcheck() {
         let response = Server::router()
-            .with_state(make_state())
+            .with_state(ServerState::for_test())
             .oneshot(Request::get("/healthcheck").body(Body::default()).unwrap())
             .await
             .unwrap();

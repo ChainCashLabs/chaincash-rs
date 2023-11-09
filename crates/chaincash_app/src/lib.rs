@@ -1,4 +1,4 @@
-use chaincash_offchain::{node::node_from_config, TransactionBuilder};
+use chaincash_offchain::{node::node_from_config, TransactionService};
 use chaincash_server::{Server, ServerState};
 use chaincash_store::{ChainCashStore, Update};
 use config::{Environment, File};
@@ -64,12 +64,12 @@ impl ChainCashApp {
             });
 
         let node = node_from_config(&self.config.node);
-        let tx_builder = TransactionBuilder::new(node.clone());
+        let tx_service = TransactionService::new(node.clone());
 
         let state = ServerState {
             store,
             node,
-            tx_builder,
+            tx_service,
         };
 
         Ok(Server::serve(listener, state).await?)
