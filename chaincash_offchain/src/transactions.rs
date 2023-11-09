@@ -1,8 +1,10 @@
 pub mod reserves;
 
-use crate::node::NodeInterface;
+use ergo_lib::ergo_chain_types::EcPoint;
+use ergo_node_interface::NodeInterface;
 
-struct TransactionBuilder {
+#[derive(Clone)]
+pub struct TransactionBuilder {
     // TODO: inputs cache so we dont need to fetch after each tx build
     node: NodeInterface,
 }
@@ -12,7 +14,7 @@ impl TransactionBuilder {
         Self { node }
     }
 
-    pub fn create_reserve() {
+    pub fn create_reserve(pk: EcPoint, amount: u64) {
         // fetch inputs (and cache?)
         todo!()
     }

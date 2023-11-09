@@ -12,6 +12,7 @@ tracing = { workspace = true }
 tokio = { workspace = true }
 chaincash_store = { workspace = true }
 thiserror = { workspace = true }
+chaincash_offchain = { path = "../chaincash_offchain" }
 serde = { workspace = true }
 
 [dev-dependencies]

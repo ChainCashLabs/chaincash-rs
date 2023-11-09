@@ -1,36 +1,43 @@
 //! ChainCash payment server creation and serving.
 use axum::{routing::get, Router};
+use chaincash_offchain::{NodeInterface, TransactionBuilder};
 use chaincash_store::ChainCashStore;
 use tokio::signal;
 use tracing::info;
 
 #[derive(Clone)]
-struct AppState {
+pub struct ServerState {
     pub store: ChainCashStore,
+    pub node: NodeInterface,
+    pub tx_builder: TransactionBuilder,
 }
 
-fn make_app() -> Result<Router<AppState>, crate::Error> {
-    let app = Router::new().route("/healthcheck", get(|| async { "ok" }));
+pub struct Server;
 
-    Ok(app)
-}
+impl Server {
+    pub fn router() -> Router<ServerState> {
+        Router::new().route("/healthcheck", get(|| async { "ok" }))
+    }
 
-/// Serves the ChainCash payment server on the given listener forever
-/// using the supplied chaincash store.
-pub async fn serve_blocking(
-    listener: std::net::TcpListener,
-    store: ChainCashStore,
-) -> Result<(), crate::Error> {
-    let state = AppState { store };
+    /// Serves the ChainCash payment server on the given listener forever
+    /// using the supplied server state.
+    pub async fn serve(
+        listener: std::net::TcpListener,
+        state: ServerState,
+    ) -> Result<(), crate::Error> {
+        info!("server started on listener: {:?}", listener);
 
-    info!("starting server");
+        axum::Server::from_tcp(listener)?
+            .serve(Self::router().with_state(state).into_make_service())
+            .await?;
 
-    axum::Server::from_tcp(listener)?
-        .serve(make_app()?.with_state(state).into_make_service())
-        .with_graceful_shutdown(shutdown())
-        .await?;
+        axum::Server::from_tcp(listener)?
+            .serve(make_app()?.with_state(state).into_make_service())
+            .with_graceful_shutdown(shutdown())
+            .await?;
 
-    Ok(())
+        Ok(())
+    }
 }
 
 async fn shutdown() {
@@ -64,16 +71,19 @@ mod tests {
 
     use super::*;
 
-    fn make_state() -> AppState {
-        AppState {
+    fn make_state() -> ServerState {
+        let node = NodeInterface::new("", "", "").unwrap();
+
+        ServerState {
             store: ChainCashStore::open_in_memory().unwrap(),
+            node: node.clone(),
+            tx_builder: TransactionBuilder::new(node),
         }
     }
 
     #[tokio::test]
     async fn test_healthcheck() {
-        let response = make_app()
-            .unwrap()
+        let response = Server::router()
             .with_state(make_state())
             .oneshot(Request::get("/healthcheck").body(Body::default()).unwrap())
             .await

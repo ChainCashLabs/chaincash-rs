@@ -6,6 +6,7 @@ license = "CC0-1.0"
 
 [dependencies]
 chaincash_server = { path = "../chaincash_server" }
+chaincash_offchain = { path = "../chaincash_offchain" }
 config = "0.13.1"
 chaincash_store = { workspace = true }
 thiserror = { workspace = true }
