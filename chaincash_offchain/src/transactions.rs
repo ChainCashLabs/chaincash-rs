@@ -1,21 +1,18 @@
 pub mod reserves;
 
-use crate::{contracts::RESERVE_ERGO_TREE, NanoErg};
+use crate::NanoErg;
 use ergo_lib::{
-    chain::{ergo_box::box_builder::ErgoBoxCandidateBuilder, transaction::TxId},
+    chain::transaction::TxId,
     ergo_chain_types::EcPoint,
-    ergotree_ir::chain::{
-        address::NetworkAddress,
-        ergo_box::{box_value::BoxValue, ErgoBox, NonMandatoryRegisterId},
-        token::TokenId,
-        token::{Token, TokenAmount},
-    },
+    ergotree_ir::chain::ergo_box::ErgoBox,
     wallet::{
         box_selector::{BoxSelection, BoxSelector, SimpleBoxSelector},
-        tx_builder::{TxBuilder, SUGGESTED_TX_FEE},
+        tx_builder::SUGGESTED_TX_FEE,
     },
 };
 use ergo_node_interface::NodeInterface;
+
+use self::reserves::mint_reserve_tx;
 
 #[derive(Clone)]
 pub struct TransactionService {
@@ -24,7 +21,7 @@ pub struct TransactionService {
     fee: NanoErg,
 }
 
-struct TxContext {
+pub struct TxContext {
     current_height: u32,
     change_address: String,
     fee: NanoErg,
@@ -60,31 +57,16 @@ impl TransactionService {
         }
     }
 
-    pub fn create_reserve(&self, pk: EcPoint, amount: NanoErg) -> TxId {
-        // TODO: get utxos from a cache
+    pub fn mint_reserve(&self, pk: EcPoint, amount: NanoErg) -> TxId {
+        // TODO: get inputs from a cache
         let ctx = self.get_tx_ctx();
         let selected_inputs = self.box_selection_with_amount(amount + ctx.fee);
-        let mut reserve_box_builder = ErgoBoxCandidateBuilder::new(
-            BoxValue::try_from(amount).unwrap(),
-            RESERVE_ERGO_TREE.clone(),
-            ctx.current_height,
-        );
-        reserve_box_builder.add_token(Token {
-            token_id: TokenId::from(selected_inputs.boxes.get(0).unwrap().box_id()),
-            amount: TokenAmount::try_from(1).unwrap(),
+        let unsigned_tx = mint_reserve_tx(reserves::MintReserveOpt {
+            pk,
+            amount,
+            ctx,
+            inputs: selected_inputs,
         });
-        reserve_box_builder.set_register_value(NonMandatoryRegisterId::R4, pk.into());
-        let unsigned_tx = TxBuilder::new(
-            selected_inputs,
-            vec![reserve_box_builder.build().unwrap()],
-            ctx.current_height,
-            BoxValue::try_from(ctx.fee).unwrap(),
-            NetworkAddress::try_from(ctx.change_address)
-                .unwrap()
-                .address(),
-        )
-        .build()
-        .unwrap();
         self.node.sign_and_submit_transaction(&unsigned_tx).unwrap()
     }
 }
