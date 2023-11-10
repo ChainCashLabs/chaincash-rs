@@ -1,5 +1,3 @@
-use reqwest::Url;
-
 pub use ergo_node_interface::NodeInterface;
 
 #[derive(serde::Deserialize, Debug)]
@@ -9,6 +7,5 @@ pub struct Config {
 }
 
 pub fn node_from_config(cfg: &Config) -> NodeInterface {
-    let url = Url::parse(&cfg.url).unwrap();
-    NodeInterface::from_url(&cfg.api_key, url)
+    NodeInterface::from_url_str(&cfg.api_key, &cfg.url).unwrap()
 }
