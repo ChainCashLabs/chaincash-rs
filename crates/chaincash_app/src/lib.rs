@@ -12,6 +12,9 @@ pub enum Error {
     #[error("server error: {0}")]
     Server(#[from] chaincash_server::Error),
 
+    #[error("offchain error: {0}")]
+    OffChain(#[from] chaincash_offchain::Error),
+
     #[error("config error: {0}")]
     Config(#[from] config::ConfigError),
 }
@@ -63,7 +66,7 @@ impl ChainCashApp {
                 .unwrap()
             });
 
-        let node = node_from_config(&self.config.node);
+        let node = node_from_config(&self.config.node)?;
         let tx_service = TransactionService::new(node.clone());
 
         let state = ServerState {
