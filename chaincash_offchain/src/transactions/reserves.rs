@@ -17,7 +17,7 @@ pub fn mint_reserve_transaction(
     opts: MintReserveOpt,
     inputs: BoxSelection<ErgoBox>,
     context: TxContext,
-) -> Result<UnsignedTransaction, super::TransactionError> {
+) -> Result<UnsignedTransaction, TransactionError> {
     let mut reserve_box_builder = ErgoBoxCandidateBuilder::new(
         opts.amount.try_into()?,
         RESERVE_ERGO_TREE.clone(),
