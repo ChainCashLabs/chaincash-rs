@@ -16,8 +16,8 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum TransactionError {
-    #[error("unable to get change address from wallet")]
-    ChangeAddress,
+    #[error("wallet change address error: {0}")]
+    ChangeAddress(String),
 
     #[error("box value error: {0}")]
     BoxValue(#[from] BoxValueError),
@@ -86,11 +86,13 @@ impl TransactionService {
             current_height: self.node.current_block_height()? as u32,
             change_address: wallet_status
                 .change_address
-                .ok_or(TransactionError::ChangeAddress)?,
+                .ok_or(TransactionError::ChangeAddress("not set".to_string()))?,
             fee: self.fee,
         })
     }
 
+    // todo should we just accept a p2pk address since it's easier for users and extract the ec point
+    // ourselves?
     pub fn mint_reserve(&self, pk: EcPoint, amount: NanoErg) -> Result<TxId, crate::Error> {
         let ctx = self.get_tx_ctx()?;
         let selected_inputs = self.box_selection_with_amount(amount + ctx.fee)?;
