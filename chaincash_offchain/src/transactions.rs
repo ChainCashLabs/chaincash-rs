@@ -3,7 +3,6 @@ pub mod reserves;
 use self::reserves::{mint_reserve_transaction, MintReserveOpt};
 use crate::NanoErg;
 use ergo_lib::chain::{ergo_box::box_builder::ErgoBoxCandidateBuilderError, transaction::TxId};
-use ergo_lib::ergo_chain_types::EcPoint;
 use ergo_lib::ergotree_ir::chain::address::AddressEncoderError;
 use ergo_lib::ergotree_ir::chain::ergo_box::{box_value::BoxValueError, ErgoBox};
 use ergo_lib::ergotree_ir::chain::token::TokenAmountError;
@@ -91,13 +90,11 @@ impl TransactionService {
         })
     }
 
-    // todo should we just accept a p2pk address since it's easier for users and extract the ec point
-    // ourselves?
-    pub fn mint_reserve(&self, pk: EcPoint, amount: NanoErg) -> Result<TxId, crate::Error> {
+    pub fn mint_reserve(&self, opts: MintReserveOpt) -> Result<TxId, crate::Error> {
         let ctx = self.get_tx_ctx()?;
-        let selected_inputs = self.box_selection_with_amount(amount + ctx.fee)?;
-        let unsigned_tx =
-            mint_reserve_transaction(MintReserveOpt { pk, amount }, selected_inputs, ctx)?;
+        let selected_inputs = self.box_selection_with_amount(opts.amount + ctx.fee)?;
+        let unsigned_tx = mint_reserve_transaction(opts, selected_inputs, ctx)?;
+
         Ok(self.node.sign_and_submit_transaction(&unsigned_tx)?)
     }
 }
