@@ -29,10 +29,7 @@ jobs:
       - name: fmt
         run: cargo fmt --all -- --check --color always
       - name: clippy
-        uses: actions-rs/clippy-check@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          args: --all-features
+        run: cargo clippy --all-features
       - name: test
         run: cargo test
       - uses: dorny/paths-filter@v2
