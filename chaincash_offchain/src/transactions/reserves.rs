@@ -1,3 +1,5 @@
+use super::{TransactionError, TxContext};
+use crate::contracts::RESERVE_ERGO_TREE;
 use ergo_lib::chain::ergo_box::box_builder::ErgoBoxCandidateBuilder;
 use ergo_lib::chain::transaction::unsigned::UnsignedTransaction;
 use ergo_lib::ergo_chain_types::EcPoint;
@@ -5,10 +7,6 @@ use ergo_lib::ergotree_ir::chain::address::NetworkAddress;
 use ergo_lib::ergotree_ir::chain::ergo_box::ErgoBox;
 use ergo_lib::ergotree_ir::chain::{ergo_box::NonMandatoryRegisterId, token::Token};
 use ergo_lib::wallet::{box_selector::BoxSelection, tx_builder::TxBuilder};
-
-use crate::contracts::RESERVE_ERGO_TREE;
-
-use super::{TransactionError, TxContext};
 
 pub struct MintReserveOpt {
     pub pk: EcPoint,
