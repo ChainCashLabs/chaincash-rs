@@ -11,14 +11,7 @@ async fn mint_reserve(
     State(state): State<crate::ServerState>,
     Json(body): Json<MintReserveOpt>,
 ) -> Result<Response, ApiError> {
-    // might need a few different types of ApiError
-    // "Upstream" - to indicate if something with the node failed
-    // "BadRequest" - to indicate bad user inputs
-    // etc
-    let tx_id = state
-        .tx_service
-        .mint_reserve(body)
-        .map_err(|e| ApiError::TransactionBuild(e.to_string()))?;
+    let tx_id = state.tx_service.mint_reserve(body)?;
     let body = Json(json!({
         "txId": tx_id.to_string(),
     }));
