@@ -38,6 +38,9 @@ pub enum TransactionError {
 
     #[error("address error: {0}")]
     Address(#[from] AddressEncoderError),
+
+    #[error("parsing error: {0}")]
+    Parsing(String),
 }
 
 pub struct TxContext {

@@ -20,8 +20,10 @@
 //! - Blacklisting of current holder
 //! - Collateralization level
 
+pub(crate) mod api;
 pub mod app;
 pub mod error;
+pub(crate) mod reserves;
 
 pub use app::{Server, ServerState};
 pub use error::Error;

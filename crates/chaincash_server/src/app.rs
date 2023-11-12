@@ -5,6 +5,8 @@ use chaincash_store::ChainCashStore;
 use tokio::signal;
 use tracing::info;
 
+use crate::api;
+
 #[derive(Clone)]
 pub struct ServerState {
     pub store: ChainCashStore,
@@ -16,7 +18,9 @@ pub struct Server;
 
 impl Server {
     pub fn router() -> Router<ServerState> {
-        Router::new().route("/healthcheck", get(|| async { "ok" }))
+        Router::new()
+            .route("/healthcheck", get(|| async { "ok" }))
+            .nest("/api", api::router())
     }
 
     /// Serves the ChainCash payment server on the given listener forever

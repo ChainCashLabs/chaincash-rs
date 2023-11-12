@@ -24,3 +24,4 @@ state.mdb
 
 # local app configuration
 config/local*
+config
