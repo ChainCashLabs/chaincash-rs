@@ -5,10 +5,10 @@ edition = "2021"
 license = "CC0-1.0"
 
 [dependencies]
-tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
-tracing = "0.1.37"
-clap = { version = "4.3.23", features = ["derive"] }
-listenfd = "1.0.1"
-tokio = { version = "1", features = ["full"] }
-anyhow = "1.0.75"
+tracing-subscriber = { workspace = true, features = ["env-filter"] }
+tracing = { workspace = true }
+clap = { workspace = true, features = ["derive"] }
+listenfd = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
+anyhow = { workspace = true }
 chaincash_app = { path = "../chaincash_app" }

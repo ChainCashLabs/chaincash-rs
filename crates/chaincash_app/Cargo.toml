@@ -7,7 +7,7 @@ license = "CC0-1.0"
 [dependencies]
 chaincash_server = { path = "../chaincash_server" }
 chaincash_store = { path = "../chaincash_store" }
-thiserror = "1.0.44"
-listenfd = "1.0.1"
-config = "0.13.1"
-serde = { version = "1.0", features = ["derive"] }
+thiserror = { workspace = true }
+listenfd = { workspace = true }
+config = { workspace = true }
+serde = { workspace = true, features = ["derive"] }

@@ -5,13 +5,13 @@ edition = "2021"
 license = "CC0-1.0"
 
 [dependencies]
-axum = "0.6.20"
-tower = "0.4.13"
-hyper = { version = "0.14.27", features = ["full"] }
-tracing = "0.1.37"
-thiserror = "1.0.44"
+axum = { workspace = true }
+tower = { workspace = true }
+hyper = { workspace = true, features = ["full"] }
+tracing = { workspace = true }
+thiserror = { workspace = true }
 chaincash_store = { path = "../chaincash_store" }
-serde = { version = "1.0", features = ["derive"] }
+serde = { workspace = true, features = ["derive"] }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full"] }
