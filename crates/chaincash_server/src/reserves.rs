@@ -1,13 +1,29 @@
-use axum::{extract::State, response::IntoResponse, routing::post, Json, Router};
+use axum::extract::State;
+use axum::response::{IntoResponse, Response};
+use axum::routing::post;
+use axum::{Json, Router};
 use chaincash_offchain::transactions::reserves::MintReserveOpt;
+use serde_json::json;
+
+use crate::api::ApiError;
 
 async fn mint_reserve(
     State(state): State<crate::ServerState>,
     Json(body): Json<MintReserveOpt>,
-) -> impl IntoResponse {
-    let tx_id = state.tx_service.mint_reserve(body).unwrap();
+) -> Result<Response, ApiError> {
+    // might need a few different types of ApiError
+    // "Upstream" - to indicate if something with the node failed
+    // "BadRequest" - to indicate bad user inputs
+    // etc
+    let tx_id = state
+        .tx_service
+        .mint_reserve(body)
+        .map_err(|e| ApiError::TransactionBuild(e.to_string()))?;
+    let body = Json(json!({
+        "txId": tx_id.to_string(),
+    }));
 
-    tx_id.to_string()
+    Ok(body.into_response())
 }
 
 pub fn router() -> Router<crate::ServerState> {

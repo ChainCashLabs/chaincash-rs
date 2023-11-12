@@ -14,6 +14,7 @@ chaincash_store = { workspace = true }
 thiserror = { workspace = true }
 chaincash_offchain = { path = "../chaincash_offchain" }
 serde = { workspace = true }
+serde_json = { workspace = true }
 
 [dev-dependencies]
 tokio = { workspace = true }
