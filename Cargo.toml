@@ -1,9 +1,29 @@
 [workspace]
 
 members = [
-  "chaincash_server",
-  "chaincash_cli",
-  "chaincash_store",
-  "chaincash_app",
-  "chaincash_predicate"
+  "crates/chaincash_server",
+  "crates/chaincash_cli",
+  "crates/chaincash_store",
+  "crates/chaincash_app",
+  "crates/chaincash_predicate",
 ]
+
+[workspace.dependencies]
+thiserror = "1.0.44"
+listenfd = "1.0.1"
+config = "0.13.1"
+serde = { version = "1.0", features = ["derive"] }
+tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
+tracing = "0.1.37"
+clap = { version = "4.3.23", features = ["derive"] }
+tokio = { version = "1", features = ["full"] }
+anyhow = "1.0.75"
+toml = "0.8.6"
+axum = "0.6.20"
+tower = "0.4.13"
+diesel = { version = "2.1.3", features = ["sqlite", "r2d2"] }
+diesel_migrations = "2.1.0"
+hyper = { version = "0.14.27", features = ["full"] }
+chaincash_store = { path = "../chaincash_store" }
+chaincash_app = { path = "../chaincash_app" }
+chaincash_server = { path = "../chaincash_server" }
