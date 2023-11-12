@@ -7,11 +7,11 @@ license = "CC0-1.0"
 [dependencies]
 axum = { workspace = true }
 tower = { workspace = true }
-hyper = { workspace = true, features = ["full"] }
+hyper = { workspace = true }
 tracing = { workspace = true }
 thiserror = { workspace = true }
-chaincash_store = { path = "../chaincash_store" }
-serde = { workspace = true, features = ["derive"] }
+chaincash_store = { workspace = true }
+serde = { workspace = true }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full"] }
