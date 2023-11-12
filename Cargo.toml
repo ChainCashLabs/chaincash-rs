@@ -1,11 +1,7 @@
 [workspace]
 
 members = [
-  "crates/chaincash_server",
-  "crates/chaincash_cli",
-  "crates/chaincash_store",
-  "crates/chaincash_app",
-  "crates/chaincash_predicate",
+  "crates/*",
 ]
 
 [workspace.dependencies]
