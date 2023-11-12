@@ -8,10 +8,10 @@ license = "CC0-1.0"
 axum = "0.6.20"
 tower = "0.4.13"
 hyper = { version = "0.14.27", features = ["full"] }
-tracing = "0.1.37"
-thiserror = "1.0.44"
-chaincash_store = { path = "../chaincash_store" }
-serde = { version = "1.0", features = ["derive"] }
+tracing = { workspace = true }
+chaincash_store = { workspace = true }
+thiserror = { workspace = true }
+serde = { workspace = true }
 
 [dev-dependencies]
-tokio = { version = "1", features = ["full"] }
+tokio = { workspace = true }
