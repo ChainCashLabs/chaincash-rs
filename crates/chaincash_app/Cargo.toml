@@ -5,9 +5,9 @@ edition = "2021"
 license = "CC0-1.0"
 
 [dependencies]
-chaincash_server = { workspace = true }
+chaincash_server = { path = "../chaincash_server" }
+config = "0.13.1"
 chaincash_store = { workspace = true }
 thiserror = { workspace = true }
 listenfd = { workspace = true }
-config = { workspace = true }
 serde = { workspace = true }
