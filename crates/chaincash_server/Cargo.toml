@@ -5,16 +5,13 @@ edition = "2021"
 license = "CC0-1.0"
 
 [dependencies]
+chaincash_offchain = { path = "../chaincash_offchain" }
+chaincash_store = { path = "../chaincash_store" }
 axum = "0.6.20"
 tower = "0.4.13"
 hyper = { version = "0.14.27", features = ["full"] }
 tracing = { workspace = true }
 tokio = { workspace = true }
-chaincash_store = { workspace = true }
 thiserror = { workspace = true }
-chaincash_offchain = { path = "../chaincash_offchain" }
 serde = { workspace = true }
 serde_json = { workspace = true }
-
-[dev-dependencies]
-tokio = { workspace = true }

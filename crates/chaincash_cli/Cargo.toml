@@ -10,6 +10,5 @@ chaincash_app = { path = "../chaincash_app" }
 clap = { version = "4.3.23", features = ["derive"] }
 human-panic = { version = "1.2.2" }
 tracing = { workspace = true }
-listenfd = { workspace = true }
 tokio = { workspace = true }
-anyhow = { workspace = true }
+anyhow = "1.0.75"
