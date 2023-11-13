@@ -54,7 +54,7 @@ async fn shutdown() {
         _ = terminate => {},
     }
 
-    println!("\nShuting down the server.")
+    info!("shutting down server");
 }
 
 #[cfg(test)]
