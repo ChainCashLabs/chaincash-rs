@@ -33,39 +33,35 @@ impl Server {
 
         axum::Server::from_tcp(listener)?
             .serve(Self::router().with_state(state).into_make_service())
-            .await?;
-
-        axum::Server::from_tcp(listener)?
-            .serve(make_app()?.with_state(state).into_make_service())
-            .with_graceful_shutdown(shutdown())
+            .with_graceful_shutdown(Self::shutdown())
             .await?;
 
         Ok(())
     }
-}
 
-async fn shutdown() {
-    let ctrl_c = async {
-        signal::ctrl_c().await.expect("Cannot install handler");
-    };
+    async fn shutdown() {
+        let ctrl_c = async {
+            signal::ctrl_c().await.expect("Cannot install handler");
+        };
 
-    #[cfg(unix)]
-    let terminate = async {
-        signal::unix::signal(signal::unix::SignalKind::terminate())
-            .expect("failed to install signal handler")
-            .recv()
-            .await;
-    };
+        #[cfg(unix)]
+        let terminate = async {
+            signal::unix::signal(signal::unix::SignalKind::terminate())
+                .expect("failed to install signal handler")
+                .recv()
+                .await;
+        };
 
-    #[cfg(not(unix))]
-    let terminate = std::future::pending::<()>();
+        #[cfg(not(unix))]
+        let terminate = std::future::pending::<()>();
 
-    tokio::select! {
-        _ = ctrl_c => {},
-        _ = terminate => {},
+        tokio::select! {
+            _ = ctrl_c => {},
+            _ = terminate => {},
+        }
+
+        info!("shutting down server");
     }
-
-    info!("shutting down server");
 }
 
 #[cfg(test)]
