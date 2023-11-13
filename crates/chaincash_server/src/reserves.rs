@@ -11,7 +11,11 @@ async fn mint_reserve(
     State(state): State<crate::ServerState>,
     Json(body): Json<MintReserveOpt>,
 ) -> Result<Response, ApiError> {
-    let tx_id = state.tx_service.mint_reserve(body)?;
+    // TODO: https://github.com/ChainCashLabs/chaincash-rs/issues/13
+    // remove requirement to run in separate thread
+    let tx_id = std::thread::spawn(move || state.tx_service.mint_reserve(body))
+        .join()
+        .unwrap()?;
     let body = Json(json!({
         "txId": tx_id.to_string(),
     }));
