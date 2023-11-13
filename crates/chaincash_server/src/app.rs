@@ -1,6 +1,7 @@
 //! ChainCash payment server creation and serving.
 use axum::{routing::get, Router};
 use chaincash_store::ChainCashStore;
+use tokio::signal;
 use tracing::info;
 
 #[derive(Clone)]
@@ -26,9 +27,34 @@ pub async fn serve_blocking(
 
     axum::Server::from_tcp(listener)?
         .serve(make_app()?.with_state(state).into_make_service())
+        .with_graceful_shutdown(shutdown())
         .await?;
 
     Ok(())
+}
+
+async fn shutdown() {
+    let ctrl_c = async {
+        signal::ctrl_c().await.expect("Cannot install handler");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        signal::unix::signal(signal::unix::SignalKind::terminate())
+            .expect("failed to install signal handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {},
+        _ = terminate => {},
+    }
+
+    info!("shutting down server");
 }
 
 #[cfg(test)]

@@ -9,6 +9,7 @@ axum = "0.6.20"
 tower = "0.4.13"
 hyper = { version = "0.14.27", features = ["full"] }
 tracing = { workspace = true }
+tokio = { workspace = true }
 chaincash_store = { workspace = true }
 thiserror = { workspace = true }
 serde = { workspace = true }
