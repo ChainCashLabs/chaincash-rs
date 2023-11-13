@@ -50,5 +50,8 @@ impl Cli {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    // Setup human panic
+    human_panic::setup_panic!();
+
     Cli::parse().execute().await
 }
