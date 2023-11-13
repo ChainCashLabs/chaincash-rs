@@ -11,7 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          submodules: 'true'
       - uses: actions-rs/toolchain@v1
         with:
           components: clippy, rustfmt
@@ -29,10 +31,7 @@ jobs:
       - name: fmt
         run: cargo fmt --all -- --check --color always
       - name: clippy
-        uses: actions-rs/clippy-check@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          args: --all-features
+        run: cargo clippy --all-features
       - name: test
         run: cargo test
       - uses: dorny/paths-filter@v2

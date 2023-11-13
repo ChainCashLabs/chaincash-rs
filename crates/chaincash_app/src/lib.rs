@@ -1,3 +1,5 @@
+use chaincash_offchain::{node::node_from_config, TransactionService};
+use chaincash_server::{Server, ServerState};
 use chaincash_store::{ChainCashStore, Update};
 use config::{Environment, File};
 use thiserror::Error;
@@ -10,6 +12,9 @@ pub enum Error {
     #[error("server error: {0}")]
     Server(#[from] chaincash_server::Error),
 
+    #[error("offchain error: {0}")]
+    OffChain(#[from] chaincash_offchain::Error),
+
     #[error("config error: {0}")]
     Config(#[from] config::ConfigError),
 }
@@ -18,6 +23,7 @@ pub enum Error {
 pub struct ChainCashConfig {
     server: chaincash_server::Config,
     store: chaincash_store::Config,
+    node: chaincash_offchain::node::Config,
 }
 
 impl ChainCashConfig {
@@ -60,6 +66,15 @@ impl ChainCashApp {
                 .unwrap()
             });
 
-        Ok(chaincash_server::serve_blocking(listener, store).await?)
+        let node = node_from_config(&self.config.node)?;
+        let tx_service = TransactionService::new(node.clone());
+
+        let state = ServerState {
+            store,
+            node,
+            tx_service,
+        };
+
+        Ok(Server::serve(listener, state).await?)
     }
 }
