@@ -1,6 +1,6 @@
 use crate::{Accept, NoteContext};
 
-#[derive(serde::Deserialize, Debug)]
+#[derive(serde::Deserialize, Debug, Clone)]
 pub struct Collateral {
     pub(crate) percent: u16,
 }

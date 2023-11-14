@@ -10,3 +10,7 @@ api_key = "hello"
 
 [store]
 url = "chaincash.sqlite"
+
+[acceptance]
+# path to preciate configuration files
+predicates = []

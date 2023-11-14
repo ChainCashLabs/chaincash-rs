@@ -1,8 +1,10 @@
 use chaincash_offchain::{node::node_from_config, TransactionService};
+use chaincash_predicate::Predicate;
 use chaincash_server::{Server, ServerState};
 use chaincash_store::{ChainCashStore, Update};
 use config::{Environment, File};
 use thiserror::Error;
+use tracing::info;
 
 #[derive(Error, Debug)]
 pub enum Error {
@@ -15,6 +17,9 @@ pub enum Error {
     #[error("offchain error: {0}")]
     OffChain(#[from] chaincash_offchain::Error),
 
+    #[error("Failed to load chaincash preddicates specified in config file")]
+    LoadPredicate(#[from] chaincash_predicate::Error),
+
     #[error("config error: {0}")]
     Config(#[from] config::ConfigError),
 }
@@ -24,6 +29,7 @@ pub struct ChainCashConfig {
     server: chaincash_server::Config,
     store: chaincash_store::Config,
     node: chaincash_offchain::node::Config,
+    acceptance: chaincash_predicate::Config,
 }
 
 impl ChainCashConfig {
@@ -55,6 +61,16 @@ impl ChainCashApp {
             store.update()?;
         }
 
+        let predicates = self
+            .config
+            .acceptance
+            .predicates
+            .iter()
+            .map(Predicate::from_file)
+            .collect::<Result<Vec<_>, _>>()?;
+
+        info!("loaded {} predicates from files", predicates.len());
+
         let listener = listenfd::ListenFd::from_env()
             .take_tcp_listener(0)
             .unwrap()
@@ -73,6 +89,7 @@ impl ChainCashApp {
             store,
             node,
             tx_service,
+            predicates,
         };
 
         Ok(Server::serve(listener, state).await?)

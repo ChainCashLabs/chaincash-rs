@@ -6,11 +6,14 @@ use std::path::PathBuf;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
-    #[error("io error: {0}")]
-    Io(#[from] std::io::Error),
-
-    #[error("deser error: {0}")]
+    #[error("Predicate deserialization failed due to: {0}")]
     Deserialization(#[from] toml::de::Error),
+
+    #[error("Failed to load predicate from file '{path}'")]
+    LoadFromFile {
+        source: std::io::Error,
+        path: String,
+    },
 }
 
 #[derive(serde::Deserialize, Debug)]
@@ -29,7 +32,7 @@ pub trait Accept {
     fn accept(&self, context: &NoteContext) -> bool;
 }
 
-#[derive(serde::Deserialize, Debug)]
+#[derive(serde::Deserialize, Debug, Clone)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum Predicate {
     Or(or::Or),
@@ -38,8 +41,13 @@ pub enum Predicate {
 }
 
 impl Predicate {
-    pub fn from_file(path: PathBuf) -> Result<Self, Error> {
-        Ok(toml::from_str(&std::fs::read_to_string(path)?)?)
+    pub fn from_file(path: &PathBuf) -> Result<Self, Error> {
+        let s = std::fs::read_to_string(path).map_err(|e| Error::LoadFromFile {
+            source: e,
+            path: path.display().to_string(),
+        })?;
+
+        Ok(toml::from_str(&s)?)
     }
 }
 

@@ -1,6 +1,6 @@
 use crate::{Accept, NoteContext};
 
-#[derive(serde::Deserialize, Debug)]
+#[derive(serde::Deserialize, Debug, Clone)]
 pub struct Whitelist {
     pub(crate) agents: Vec<String>,
 }
