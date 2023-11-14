@@ -1,0 +1,8 @@
+# any of the conditions below match
+type = "or"
+conditions = [
+    # the owner of the note is either PK1 or PK2
+    {type = "whitelist", agents = ["PK1", "PK2"]},
+    # the note has at least 100% collateral
+    {type = "collateral", percent = 100}
+]

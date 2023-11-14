@@ -12,5 +12,6 @@ api_key = "hello"
 url = "chaincash.sqlite"
 
 [acceptance]
-# path to preciate configuration files
-predicates = []
+# path to predicate configuration files
+# if ANY of these evaluate to true a note will be accepted
+predicates = ["config/predicates/example.toml"]
