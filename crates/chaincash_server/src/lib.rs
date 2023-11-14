@@ -20,6 +20,7 @@
 //! - Blacklisting of current holder
 //! - Collateralization level
 
+pub(crate) mod acceptance;
 pub(crate) mod api;
 pub mod app;
 pub mod error;

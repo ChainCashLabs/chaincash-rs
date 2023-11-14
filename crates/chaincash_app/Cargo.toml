@@ -8,7 +8,9 @@ license = "CC0-1.0"
 chaincash_server = { path = "../chaincash_server" }
 chaincash_offchain = { path = "../chaincash_offchain" }
 chaincash_store = { path = "../chaincash_store" }
+chaincash_predicate = { path = "../chaincash_predicate" }
 config = "0.13.1"
 thiserror = { workspace = true }
 listenfd = "1.0.1"
 serde = { workspace = true }
+tracing = { workspace = true }
