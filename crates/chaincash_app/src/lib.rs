@@ -17,7 +17,7 @@ pub enum Error {
     #[error("offchain error: {0}")]
     OffChain(#[from] chaincash_offchain::Error),
 
-    #[error("Failed to load chaincash preddicates specified in config file")]
+    #[error("Failed to load chaincash predicates specified in config file")]
     LoadPredicate(#[from] chaincash_predicate::Error),
 
     #[error("config error: {0}")]
