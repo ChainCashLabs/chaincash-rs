@@ -1,6 +1,8 @@
+use serde::{Deserialize, Serialize};
+
 use crate::{Accept, NoteContext, Predicate};
 
-#[derive(serde::Deserialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Or {
     conditions: Vec<Predicate>,
 }

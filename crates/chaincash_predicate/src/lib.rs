@@ -4,6 +4,8 @@ pub mod whitelist;
 
 use std::path::PathBuf;
 
+use serde::{Deserialize, Serialize};
+
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("Predicate deserialization failed due to: {0}")]
@@ -32,7 +34,7 @@ pub trait Accept {
     fn accept(&self, context: &NoteContext) -> bool;
 }
 
-#[derive(serde::Deserialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum Predicate {
     Or(or::Or),
