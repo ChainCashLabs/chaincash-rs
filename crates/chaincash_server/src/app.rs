@@ -76,6 +76,7 @@ impl ServerState {
             store: ChainCashStore::open_in_memory().unwrap(),
             node: node.clone(),
             tx_service: TransactionService::new(node),
+            predicates: vec![],
         }
     }
 }
