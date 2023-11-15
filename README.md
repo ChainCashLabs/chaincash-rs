@@ -3,6 +3,12 @@
 [![ci](https://github.com/ChainCashLabs/chaincash-rs/actions/workflows/ci.yaml/badge.svg)](https://github.com/ChainCashLabs/chaincash-rs/actions/workflows/ci.yaml) [![audit](https://github.com/ChainCashLabs/chaincash-rs/actions/workflows/audit.yaml/badge.svg)](https://github.com/ChainCashLabs/chaincash-rs/actions/workflows/audit.yaml)
 [![Discord badge][]][Discord link] [![Telegram](https://img.shields.io/badge/Telegram-2CA5E0?style=flat-squeare&logo=telegram&logoColor=white)](https://t.me/+xIwo9PNJdtdhMzZl)
 
+`ChainCash` is a p2p monetary system with elastic money creation backed by trust and blockchain assets.
+
+For a in-depth explaination please refer to the whitepaper [here](https://github.com/ChainCashLabs/chaincash/blob/master/docs/whitepaper/chaincash.pdf).
+
+This repository contains offchain/server software for agents participating in `ChainCash`.
+
 ## Running
 
 We aren't yet shipping prebuilt `ChainCash` binaries so currently you must build from source yourself using `cargo`.
