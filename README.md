@@ -17,6 +17,12 @@ and issue notes against it.
 
 We aren't yet shipping prebuilt `ChainCash` binaries so currently you must build from source yourself using `cargo`.
 
+Firstly ensure that you have the `contracts` submodule initialized:
+
+```sh
+git submodule update --init
+```
+
 The easiest way to build and run currently is like so:
 
 ```sh
