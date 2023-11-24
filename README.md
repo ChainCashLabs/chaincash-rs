@@ -5,7 +5,7 @@
 
 `ChainCash` is a p2p monetary system with elastic money creation backed by trust and blockchain assets.
 
-For a in-depth explaination please refer to the whitepaper [here](https://github.com/ChainCashLabs/chaincash/blob/master/docs/whitepaper/chaincash.pdf).
+For in-depth explanation please refer to the whitepaper [here](https://github.com/ChainCashLabs/chaincash/blob/master/docs/whitepaper/chaincash.pdf).
 
 This repository contains offchain/server software for agents participating in `ChainCash`. Running ChainCash server 
 allows you to run your own bank in ChainCash free-banking network, which works on top of Ergo blockchain. With your own
