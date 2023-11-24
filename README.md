@@ -7,7 +7,11 @@
 
 For a in-depth explaination please refer to the whitepaper [here](https://github.com/ChainCashLabs/chaincash/blob/master/docs/whitepaper/chaincash.pdf).
 
-This repository contains offchain/server software for agents participating in `ChainCash`.
+This repository contains offchain/server software for agents participating in `ChainCash`. Running ChainCash server 
+allows you to run your own bank in ChainCash free-banking network, which works on top of Ergo blockchain. With your own
+server you can set your own acceptance predicate (filter for notes you accept), create your own reserve on the blockchain 
+and issue notes against it. 
+
 
 ## Running
 
