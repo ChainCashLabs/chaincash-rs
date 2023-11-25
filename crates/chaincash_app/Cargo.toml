@@ -14,3 +14,4 @@ thiserror = { workspace = true }
 listenfd = "1.0.1"
 serde = { workspace = true }
 tracing = { workspace = true }
+ergo_client = { workspace = true }

@@ -5,10 +5,11 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
+tracing = { workspace = true }
 tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
+tracing-log = "0.2.0"
 chaincash_app = { path = "../chaincash_app" }
 clap = { version = "4.3.23", features = ["derive"] }
 human-panic = { version = "1.2.2" }
-tracing = { workspace = true }
 tokio = { workspace = true }
 anyhow = "1.0.75"
