@@ -1,19 +1,25 @@
 //! ChainCash payment server creation and serving.
 use axum::{routing::get, Router};
-use chaincash_offchain::{NodeInterface, TransactionService};
+use chaincash_offchain::TransactionService;
 use chaincash_predicate::Predicate;
 use chaincash_store::ChainCashStore;
 use tokio::signal;
 use tracing::info;
+use ergo_client::node::NodeClient;
 
 use crate::api;
 
 #[derive(Clone)]
 pub struct ServerState {
     pub store: ChainCashStore,
-    pub node: NodeInterface,
-    pub tx_service: TransactionService,
+    pub node: NodeClient,
     pub predicates: Vec<Predicate>,
+}
+
+impl ServerState {
+    pub fn tx_service(&self) -> TransactionService {
+        TransactionService::new(&self.node)
+    }
 }
 
 pub struct Server;

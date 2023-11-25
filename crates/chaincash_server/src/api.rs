@@ -8,6 +8,14 @@ trait AsStatusCode {
     fn as_status_code(&self) -> StatusCode;
 }
 
+// Despite the name this doesn't represent a clientside error in the context of server/client
+// it means the node client library threw an error
+impl AsStatusCode for chaincash_offchain::ClientError {
+    fn as_status_code(&self) -> StatusCode {
+        StatusCode::INTERNAL_SERVER_ERROR
+    }
+}
+
 impl AsStatusCode for chaincash_offchain::node::NodeError {
     fn as_status_code(&self) -> StatusCode {
         StatusCode::INTERNAL_SERVER_ERROR
@@ -23,6 +31,7 @@ impl AsStatusCode for chaincash_offchain::transactions::TransactionError {
 impl AsStatusCode for chaincash_offchain::Error {
     fn as_status_code(&self) -> StatusCode {
         match self {
+            chaincash_offchain::Error::Client(e) => e.as_status_code(),
             chaincash_offchain::Error::Node(e) => e.as_status_code(),
             chaincash_offchain::Error::Transaction(e) => e.as_status_code(),
         }

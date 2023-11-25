@@ -1,6 +1,8 @@
-use ergo_node_interface::NodeInterface;
+use std::time::Duration;
 
-pub use ergo_node_interface::node_interface::NodeError;
+use ergo_client::node::NodeClient;
+
+pub use ergo_client::node::NodeError;
 
 #[derive(serde::Deserialize, Debug)]
 pub struct Config {
@@ -8,6 +10,10 @@ pub struct Config {
     api_key: String,
 }
 
-pub fn node_from_config(cfg: &Config) -> Result<NodeInterface, crate::Error> {
-    Ok(NodeInterface::from_url_str(&cfg.api_key, &cfg.url)?)
+pub fn node_from_config(cfg: &Config) -> Result<NodeClient, crate::Error> {
+    Ok(NodeClient::from_url_str(
+        &cfg.url,
+        cfg.api_key.clone(),
+        Duration::from_secs(5),
+    )?)
 }

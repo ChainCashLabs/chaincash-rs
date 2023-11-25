@@ -1,4 +1,4 @@
-use chaincash_offchain::{node::node_from_config, TransactionService};
+use chaincash_offchain::node::node_from_config;
 use chaincash_predicate::Predicate;
 use chaincash_server::{Server, ServerState};
 use chaincash_store::{ChainCashStore, Update};
@@ -83,12 +83,10 @@ impl ChainCashApp {
             });
 
         let node = node_from_config(&self.config.node)?;
-        let tx_service = TransactionService::new(node.clone());
 
         let state = ServerState {
             store,
             node,
-            tx_service,
             predicates,
         };
 

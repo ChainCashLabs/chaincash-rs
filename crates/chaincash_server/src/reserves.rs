@@ -11,16 +11,12 @@ async fn mint_reserve(
     State(state): State<crate::ServerState>,
     Json(body): Json<MintReserveOpt>,
 ) -> Result<Response, ApiError> {
-    // TODO: https://github.com/ChainCashLabs/chaincash-rs/issues/13
-    // remove requirement to run in separate thread
-    let tx_id = std::thread::spawn(move || state.tx_service.mint_reserve(body))
-        .join()
-        .unwrap()?;
-    let body = Json(json!({
-        "txId": tx_id.to_string(),
+    let tx_id = state.tx_service().mint_reserve(body).await?;
+    // store the reserver now or when it hits the chain? we probably need to track the box?
+    let response = Json(json!({
+        "txId": tx_id
     }));
-
-    Ok(body.into_response())
+    Ok(response.into_response())
 }
 
 pub fn router() -> Router<crate::ServerState> {
