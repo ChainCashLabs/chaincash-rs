@@ -25,18 +25,14 @@ struct Cli {
 
 impl Cli {
     pub async fn execute(&self) -> Result<()> {
+        let tracing_filter =
+            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
+                // axum logs rejections from built-in extractors with the `axum::rejection`
+                // target, at `TRACE` level. `axum::rejection=trace` enables showing those events
+                format!("{},axum::rejection=trace", self.log_level).into()
+            });
         tracing_subscriber::registry()
-            .with(
-                tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
-                    // axum logs rejections from built-in extractors with the `axum::rejection`
-                    // target, at `TRACE` level. `axum::rejection=trace` enables showing those events
-                    format!(
-                        "chaincash_cli={},chaincash_server={},axum::rejection=trace,reqwest={}",
-                        self.log_level, self.log_level, self.log_level
-                    )
-                    .into()
-                }),
-            )
+            .with(tracing_filter)
             .with(tracing_subscriber::fmt::layer())
             .init();
 

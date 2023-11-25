@@ -916,8 +916,9 @@ dependencies = [
 [[package]]
 name = "ergo_client"
 version = "0.1.0"
-source = "git+https://github.com/ross-weir/ergo_client.git#8244e3b7ecf098bc0a88080aba7411b5ccde25dc"
+source = "git+https://github.com/ross-weir/ergo_client.git#366ad514685a7cfeb32ea6a305325b83c157117a"
 dependencies = [
+ "anyhow",
  "ergo-lib",
  "reqwest",
  "serde",
@@ -925,6 +926,7 @@ dependencies = [
  "serde_qs",
  "thiserror",
  "tokio",
+ "url",
 ]
 
 [[package]]
