@@ -7,7 +7,7 @@ use ergo_client::node::NodeClient;
 use tokio::signal;
 use tracing::info;
 
-use crate::api;
+use crate::{api, openapi};
 
 #[derive(Clone)]
 pub struct ServerState {
@@ -28,6 +28,7 @@ impl Server {
     pub fn router() -> Router<ServerState> {
         Router::new()
             .route("/healthcheck", get(|| async { "ok" }))
+            .merge(openapi::router())
             .nest("/api", api::router())
     }
 

@@ -11,6 +11,8 @@ chaincash_predicate = { path = "../chaincash_predicate" }
 axum = "0.6.20"
 tower = "0.4.13"
 hyper = { version = "0.14.27", features = ["full"] }
+utoipa = { version = "4", features = ["axum_extras"] }
+utoipa-swagger-ui = { version = "4", features = ["axum"] }
 tracing = { workspace = true }
 tokio = { workspace = true }
 thiserror = { workspace = true }

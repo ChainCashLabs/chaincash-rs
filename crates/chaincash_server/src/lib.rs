@@ -24,6 +24,7 @@ pub(crate) mod acceptance;
 pub(crate) mod api;
 pub mod app;
 pub mod error;
+pub(crate) mod openapi;
 pub(crate) mod reserves;
 
 pub use app::{Server, ServerState};
