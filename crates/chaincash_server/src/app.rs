@@ -3,9 +3,9 @@ use axum::{routing::get, Router};
 use chaincash_offchain::TransactionService;
 use chaincash_predicate::Predicate;
 use chaincash_store::ChainCashStore;
+use ergo_client::node::NodeClient;
 use tokio::signal;
 use tracing::info;
-use ergo_client::node::NodeClient;
 
 use crate::api;
 
