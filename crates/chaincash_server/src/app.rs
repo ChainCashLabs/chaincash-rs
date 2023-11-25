@@ -76,12 +76,16 @@ impl Server {
 impl ServerState {
     pub fn for_test() -> Self {
         // node shouldn't be actually used in unit tests
-        let node = NodeInterface::new("hello", "127.0.0.1", "9032").unwrap();
+        let node = NodeClient::from_url_str(
+            "http://127.0.0.1:9052",
+            "hello".to_string(),
+            std::time::Duration::from_secs(5),
+        )
+        .unwrap();
 
         ServerState {
             store: ChainCashStore::open_in_memory().unwrap(),
-            node: node.clone(),
-            tx_service: TransactionService::new(node),
+            node,
             predicates: vec![],
         }
     }
