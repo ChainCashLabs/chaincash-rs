@@ -31,8 +31,8 @@ impl Cli {
                     // axum logs rejections from built-in extractors with the `axum::rejection`
                     // target, at `TRACE` level. `axum::rejection=trace` enables showing those events
                     format!(
-                        "chaincash_cli={},chaincash_server={},axum::rejection=trace",
-                        self.log_level, self.log_level
+                        "chaincash_cli={},chaincash_server={},axum::rejection=trace,reqwest={}",
+                        self.log_level, self.log_level, self.log_level
                     )
                     .into()
                 }),

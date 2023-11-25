@@ -1,5 +1,7 @@
 pub mod reserves;
 
+use crate::contracts::RESERVE_CONTRACT;
+
 use self::reserves::{mint_reserve_transaction, MintReserveOpt};
 use ergo_client::node::NodeClient;
 use ergo_lib::chain::ergo_box::box_builder::ErgoBoxCandidateBuilderError;
@@ -99,7 +101,8 @@ impl<'a> TransactionService<'a> {
         let selected_inputs = self
             .box_selection_with_amount(opts.amount + ctx.fee)
             .await?;
-        let unsigned_tx = mint_reserve_transaction(opts, selected_inputs, ctx)?;
+        let reserve_tree = self.node.extensions().compile_contract(RESERVE_CONTRACT).await?;
+        let unsigned_tx = mint_reserve_transaction(opts, reserve_tree, selected_inputs, ctx)?;
 
         Ok(self.node.extensions().sign_and_submit(unsigned_tx).await?)
     }

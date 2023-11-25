@@ -9,7 +9,7 @@ pub use transactions::TransactionService;
 
 #[derive(Debug, Error)]
 pub enum Error {
-    #[error("Ergo client error")]
+    #[error("Ergo client error: {0}")]
     Client(#[from] ergo_client::Error),
 
     #[error("Ergo Node client error")]

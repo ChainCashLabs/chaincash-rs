@@ -1,11 +1,11 @@
 use super::{TransactionError, TxContext};
-use crate::contracts::RESERVE_ERGO_TREE;
 use ergo_lib::chain::ergo_box::box_builder::ErgoBoxCandidateBuilder;
 use ergo_lib::chain::transaction::unsigned::UnsignedTransaction;
 use ergo_lib::ergo_chain_types::EcPoint;
 use ergo_lib::ergotree_ir::chain::address::NetworkAddress;
 use ergo_lib::ergotree_ir::chain::ergo_box::ErgoBox;
 use ergo_lib::ergotree_ir::chain::{ergo_box::NonMandatoryRegisterId, token::Token};
+use ergo_lib::ergotree_ir::ergo_tree::ErgoTree;
 use ergo_lib::wallet::{box_selector::BoxSelection, tx_builder::TxBuilder};
 use serde::{Deserialize, Serialize};
 
@@ -17,13 +17,14 @@ pub struct MintReserveOpt {
 
 pub fn mint_reserve_transaction(
     opts: MintReserveOpt,
+    reserve_tree: ErgoTree,
     inputs: BoxSelection<ErgoBox>,
     context: TxContext,
 ) -> Result<UnsignedTransaction, TransactionError> {
     let pk = EcPoint::try_from(opts.public_key_hex).map_err(|s| TransactionError::Parsing(s))?;
     let mut reserve_box_builder = ErgoBoxCandidateBuilder::new(
         opts.amount.try_into()?,
-        RESERVE_ERGO_TREE.clone(),
+        reserve_tree,
         context.current_height,
     );
     let nft_id = inputs
