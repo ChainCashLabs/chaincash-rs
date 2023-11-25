@@ -83,7 +83,7 @@ impl<'a> TransactionService<'a> {
         let wallet_status = self.node.endpoints().wallet()?.status().await?;
         let info = self.node.endpoints().root()?.info().await?;
 
-        if wallet_status.change_address == "" {
+        if wallet_status.change_address.is_empty() {
             Err(TransactionError::ChangeAddress(
                 "address not set".to_owned(),
             ))?

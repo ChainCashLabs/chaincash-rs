@@ -21,7 +21,7 @@ pub fn mint_reserve_transaction(
     inputs: BoxSelection<ErgoBox>,
     context: TxContext,
 ) -> Result<UnsignedTransaction, TransactionError> {
-    let pk = EcPoint::try_from(opts.public_key_hex).map_err(|s| TransactionError::Parsing(s))?;
+    let pk = EcPoint::try_from(opts.public_key_hex).map_err(TransactionError::Parsing)?;
     let mut reserve_box_builder = ErgoBoxCandidateBuilder::new(
         opts.amount.try_into()?,
         reserve_tree,
