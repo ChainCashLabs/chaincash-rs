@@ -39,7 +39,7 @@ pub fn mint_note_transaction(
         key_length: 32,
         value_length_opt: None,
     };
-    let nft_id = inputs
+    let token_id = inputs
         .boxes
         .get(0)
         .ok_or_else(|| {
@@ -48,16 +48,16 @@ pub fn mint_note_transaction(
             )
         })?
         .box_id();
-    let nft = Token {
-        token_id: nft_id.into(),
-        amount: 1.try_into()?,
+    let token = Token {
+        token_id: token_id.into(),
+        amount: request.gold_amount_mg.try_into()?,
     };
     let mut note_box_builder = ErgoBoxCandidateBuilder::new(
         request.box_nanoergs.try_into()?,
         note_tree,
         context.current_height,
     );
-    note_box_builder.add_token(nft);
+    note_box_builder.add_token(token);
     note_box_builder.set_register_value(NonMandatoryRegisterId::R4, avl_tree.into());
     note_box_builder.set_register_value(NonMandatoryRegisterId::R5, owner_pk.into());
     note_box_builder.set_register_value(NonMandatoryRegisterId::R6, 0i64.into());
