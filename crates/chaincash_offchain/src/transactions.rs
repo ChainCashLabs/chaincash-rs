@@ -1,8 +1,9 @@
+pub mod notes;
 pub mod reserves;
 
 use crate::contracts::RESERVE_CONTRACT;
 
-use self::reserves::{mint_reserve_transaction, MintReserveOpt};
+use self::reserves::{mint_reserve_transaction, MintReserveRequest};
 use ergo_client::node::NodeClient;
 use ergo_lib::chain::ergo_box::box_builder::ErgoBoxCandidateBuilderError;
 use ergo_lib::ergotree_ir::chain::address::AddressEncoderError;
@@ -96,7 +97,7 @@ impl<'a> TransactionService<'a> {
         }
     }
 
-    pub async fn mint_reserve(&self, opts: MintReserveOpt) -> Result<String, crate::Error> {
+    pub async fn mint_reserve(&self, opts: MintReserveRequest) -> Result<String, crate::Error> {
         let ctx = self.get_tx_ctx().await?;
         let selected_inputs = self
             .box_selection_with_amount(opts.amount + ctx.fee)
