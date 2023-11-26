@@ -326,6 +326,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "771fe0050b883fcc3ea2359b1a96bcfbc090b7116eae7c3c512c7a083fdf23d3"
 
 [[package]]
+name = "bs58"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f5353f36341f7451062466f0b755b96ac3a9547e4d7f6b70d603fc721a7d7896"
+dependencies = [
+ "tinyvec",
+]
+
+[[package]]
 name = "bumpalo"
 version = "3.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -392,10 +401,14 @@ dependencies = [
 name = "chaincash_offchain"
 version = "0.1.0"
 dependencies = [
+ "bs58 0.5.0",
  "ergo-lib",
  "ergo_client",
  "once_cell",
+ "scorex_crypto_avltree",
  "serde",
+ "serde_json",
+ "sigma-ser 0.13.1",
  "thiserror",
 ]
 
@@ -837,7 +850,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_with",
- "sigma-ser",
+ "sigma-ser 0.15.0",
  "sigma-util",
  "thiserror",
  "url",
@@ -869,7 +882,7 @@ dependencies = [
  "serde_json",
  "serde_with",
  "sha2 0.10.8",
- "sigma-ser",
+ "sigma-ser 0.15.0",
  "sigma-util",
  "thiserror",
  "unicode-normalization",
@@ -887,7 +900,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_repr",
- "sigma-ser",
+ "sigma-ser 0.15.0",
  "sigma-util",
  "thiserror",
 ]
@@ -908,7 +921,7 @@ dependencies = [
  "num-traits",
  "serde",
  "serde_json",
- "sigma-ser",
+ "sigma-ser 0.15.0",
  "sigma-util",
  "thiserror",
 ]
@@ -971,7 +984,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_with",
- "sigma-ser",
+ "sigma-ser 0.15.0",
  "sigma-util",
  "thiserror",
 ]
@@ -983,7 +996,7 @@ source = "git+https://github.com/ergoplatform/sigma-rust.git?branch=master#417b9
 dependencies = [
  "base16",
  "bounded-vec",
- "bs58",
+ "bs58 0.4.0",
  "derive_more",
  "elliptic-curve 0.12.3",
  "ergo-chain-types",
@@ -1000,7 +1013,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_with",
- "sigma-ser",
+ "sigma-ser 0.15.0",
  "sigma-util",
  "strum",
  "strum_macros",
@@ -2552,6 +2565,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f40ca3c46823713e0d4209592e8d6e826aa57e928f09752619fc696c499637f6"
 dependencies = [
  "lazy_static",
+]
+
+[[package]]
+name = "sigma-ser"
+version = "0.13.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fc55e7d946bac387ebc75afedfe54e329e77a673a1e7d77bad3126a98278bf6d"
+dependencies = [
+ "bitvec",
+ "bounded-vec",
+ "thiserror",
 ]
 
 [[package]]
