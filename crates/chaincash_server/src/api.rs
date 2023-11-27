@@ -1,5 +1,6 @@
+use axum::body::Body;
 use axum::response::{IntoResponse, Response};
-use axum::{Json, Router};
+use axum::Router;
 use hyper::StatusCode;
 use serde_json::json;
 use thiserror::Error;
@@ -49,13 +50,18 @@ impl IntoResponse for ApiError {
         let (status_code, msg) = match self {
             ApiError::OffChain(e) => (e.as_status_code(), e.to_string()),
         };
-        let body = Json(json!({
+        let body = Body::from(json!({
             "error": {
                 "detail": msg,
             }
-        }));
+        }).to_string());
 
-        (status_code, body).into_response()
+
+        Response::builder()
+            .status(status_code.as_u16())
+            .header("Content-Type", "application/json")
+            .body(body)
+            .unwrap()
     }
 }
 

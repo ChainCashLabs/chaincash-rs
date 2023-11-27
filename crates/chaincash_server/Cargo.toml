@@ -8,7 +8,7 @@ license.workspace = true
 chaincash_offchain = { path = "../chaincash_offchain" }
 chaincash_store = { path = "../chaincash_store" }
 chaincash_predicate = { path = "../chaincash_predicate" }
-axum = "0.6.20"
+axum = "0.7.1"
 tower = "0.4.13"
 hyper = { version = "0.14.27", features = ["full"] }
 tracing = { workspace = true }

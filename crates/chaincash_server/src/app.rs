@@ -4,8 +4,9 @@ use chaincash_offchain::TransactionService;
 use chaincash_predicate::Predicate;
 use chaincash_store::ChainCashStore;
 use ergo_client::node::NodeClient;
-use tokio::signal;
+use tokio::{net::TcpListener, signal};
 use tracing::info;
+
 
 use crate::api;
 
@@ -37,11 +38,11 @@ impl Server {
         listener: std::net::TcpListener,
         state: ServerState,
     ) -> Result<(), crate::Error> {
+        let listener = TcpListener::from_std(listener)?;
         info!("server started on listener: {:?}", listener);
 
-        axum::Server::from_tcp(listener)?
-            .serve(Self::router().with_state(state).into_make_service())
-            .with_graceful_shutdown(Self::shutdown())
+        axum::serve::serve(listener, 
+            Self::router().with_state(state).into_make_service())
             .await?;
 
         Ok(())
@@ -93,7 +94,7 @@ impl ServerState {
 
 #[cfg(test)]
 mod tests {
-    use hyper::{Body, Request, StatusCode};
+    use axum::{http::{Request, StatusCode}, body::Body};
     use tower::ServiceExt;
 
     use super::*;
