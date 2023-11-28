@@ -53,7 +53,7 @@ impl IntoResponse for ApiError {
             "error": {
                 "detail": msg,
             }
-        }).to_string());
+        }));
 
         (status_code, body).into_response()
     }
