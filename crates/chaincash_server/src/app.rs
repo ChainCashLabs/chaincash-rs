@@ -38,9 +38,11 @@ impl Server {
     ) -> Result<(), crate::Error> {
         info!("server started on listener: {:?}", listener);
 
-        axum::serve::serve(listener.try_into()?, 
-            Self::router().with_state(state).into_make_service())
-            .await?;
+        axum::serve::serve(
+            listener.try_into()?,
+            Self::router().with_state(state).into_make_service(),
+        )
+        .await?;
 
         Ok(())
     }
@@ -67,7 +69,10 @@ impl ServerState {
 
 #[cfg(test)]
 mod tests {
-    use axum::{http::{Request, StatusCode}, body::Body};
+    use axum::{
+        body::Body,
+        http::{Request, StatusCode},
+    };
     use tower::ServiceExt;
 
     use super::*;
