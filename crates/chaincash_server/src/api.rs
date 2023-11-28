@@ -1,7 +1,7 @@
 use axum::body::Body;
 use axum::response::{IntoResponse, Response};
 use axum::Router;
-use hyper::StatusCode;
+use axum::http::StatusCode;
 use serde_json::json;
 use thiserror::Error;
 

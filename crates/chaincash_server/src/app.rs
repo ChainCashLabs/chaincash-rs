@@ -4,9 +4,7 @@ use chaincash_offchain::TransactionService;
 use chaincash_predicate::Predicate;
 use chaincash_store::ChainCashStore;
 use ergo_client::node::NodeClient;
-use tokio::{net::TcpListener, signal};
 use tracing::info;
-
 
 use crate::api;
 
@@ -38,38 +36,13 @@ impl Server {
         listener: std::net::TcpListener,
         state: ServerState,
     ) -> Result<(), crate::Error> {
-        let listener = TcpListener::from_std(listener)?;
         info!("server started on listener: {:?}", listener);
 
-        axum::serve::serve(listener, 
+        axum::serve::serve(listener.try_into()?, 
             Self::router().with_state(state).into_make_service())
             .await?;
 
         Ok(())
-    }
-
-    async fn shutdown() {
-        let ctrl_c = async {
-            signal::ctrl_c().await.expect("Cannot install handler");
-        };
-
-        #[cfg(unix)]
-        let terminate = async {
-            signal::unix::signal(signal::unix::SignalKind::terminate())
-                .expect("failed to install signal handler")
-                .recv()
-                .await;
-        };
-
-        #[cfg(not(unix))]
-        let terminate = std::future::pending::<()>();
-
-        tokio::select! {
-            _ = ctrl_c => {},
-            _ = terminate => {},
-        }
-
-        info!("shutting down server");
     }
 }
 
