@@ -25,6 +25,8 @@ struct Cli {
 
 impl Cli {
     pub async fn execute(&self) -> Result<()> {
+        let appender = tracing_appender::rolling::daily("chaincash.log.d", "chaincash.log");
+        let (file_writer, _guard) = tracing_appender::non_blocking(appender);
         let tracing_filter =
             tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
                 // axum logs rejections from built-in extractors with the `axum::rejection`
@@ -33,6 +35,7 @@ impl Cli {
             });
         tracing_subscriber::registry()
             .with(tracing_filter)
+            .with(tracing_subscriber::fmt::layer().with_writer(file_writer))
             .with(tracing_subscriber::fmt::layer())
             .init();
 
