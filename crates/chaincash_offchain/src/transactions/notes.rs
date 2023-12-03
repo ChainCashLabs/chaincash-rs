@@ -1,6 +1,6 @@
-use scorex_crypto_avltree::authenticated_tree_ops::AuthenticatedTreeOps;
-use scorex_crypto_avltree::batch_avl_prover::BatchAVLProver;
-use scorex_crypto_avltree::batch_node::{AVLTree, Node, NodeHeader};
+use ergo_avltree_rust::authenticated_tree_ops::AuthenticatedTreeOps;
+use ergo_avltree_rust::batch_avl_prover::BatchAVLProver;
+use ergo_avltree_rust::batch_node::{AVLTree, Node, NodeHeader};
 
 use super::{TransactionError, TxContext};
 use ergo_lib::chain::ergo_box::box_builder::ErgoBoxCandidateBuilder;
@@ -14,7 +14,6 @@ use ergo_lib::ergotree_ir::mir::avl_tree_data::{AvlTreeData, AvlTreeFlags};
 use ergo_lib::wallet::box_selector::BoxSelection;
 use ergo_lib::wallet::tx_builder::TxBuilder;
 use serde::{Deserialize, Serialize};
-use sigma_ser::ScorexSerializable;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct MintNoteRequest {
@@ -37,22 +36,21 @@ pub fn mint_note_transaction(
     let prover = BatchAVLProver::new(
         AVLTree::new(
             |digest| Node::LabelOnly(NodeHeader::new(Some(*digest), None)),
-            1,
+            32,
             None,
         ),
         true,
     );
-    let initial_digest: ADDigest = prover
+    let digest: ADDigest = prover
         .digest()
         .unwrap()
         .into_iter()
         .collect::<Vec<_>>()
         .try_into()
         .unwrap();
-
     let avl_flags = AvlTreeFlags::new(true, false, false);
     let avl_tree = AvlTreeData {
-        digest: initial_digest,
+        digest,
         tree_flags: avl_flags,
         key_length: 32,
         value_length_opt: None,
@@ -84,62 +82,4 @@ pub fn mint_note_transaction(
         NetworkAddress::try_from(context.change_address)?.address(),
     )
     .build()?)
-}
-
-#[cfg(test)]
-mod tests {
-    use ergo_lib::ergotree_ir::{base16_str::Base16Str, mir::constant::Constant};
-
-    use super::*;
-
-    #[test]
-    fn test_avl() {
-        // let tree = AVLTree::new(
-        //     |digest| Node::LabelOnly(NodeHeader::new(Some(*digest), None)),
-        //     32,
-        //     None,
-        // );
-        //
-        // let mut prover = BatchAVLProver::new(tree.clone(), true);
-        // let state = prover.state();
-        // let root = state.tree.clone().root.unwrap();
-        // let label = state.tree.label(&root);
-        // println!("{:?}, height: {}", label, state.tree.height);
-        // let initial_digest: ADDigest = prover
-        //     .digest()
-        //     .unwrap()
-        //     .into_iter()
-        //     .collect::<Vec<_>>()
-        //     .try_into()
-        //     .unwrap();
-        // println!("{:?}, tree height: {}", initial_digest, tree.height);
-
-        let prover = BatchAVLProver::new(
-            AVLTree::new(
-                |digest| Node::LabelOnly(NodeHeader::new(Some(*digest), None)),
-                32,
-                None,
-            ),
-            true,
-        );
-        let initial_digest: ADDigest = prover
-            .digest()
-            .unwrap()
-            .into_iter()
-            .collect::<Vec<_>>()
-            .try_into()
-            .unwrap();
-
-        let avl_flags = AvlTreeFlags::new(true, false, false);
-        let avl_tree = AvlTreeData {
-            digest: initial_digest,
-            tree_flags: avl_flags,
-            key_length: 32,
-            value_length_opt: None,
-        };
-        let con: Constant = avl_tree.into();
-        let s = con.base16_str().unwrap();
-        println!("{}", s);
-        assert!(false);
-    }
 }

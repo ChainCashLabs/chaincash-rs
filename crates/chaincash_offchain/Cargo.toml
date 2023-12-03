@@ -12,5 +12,6 @@ ergo_client = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
-scorex_crypto_avltree = "0.1.0"
+ergo_avltree_rust = "0.1.0"
 sigma-ser = "0.13.0"
+tracing = { workspace = true }
