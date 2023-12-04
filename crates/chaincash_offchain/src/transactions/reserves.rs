@@ -10,20 +10,20 @@ use ergo_lib::wallet::{box_selector::BoxSelection, tx_builder::TxBuilder};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct MintReserveOpt {
+pub struct MintReserveRequest {
     pub public_key_hex: String,
     pub amount: u64,
 }
 
 pub fn mint_reserve_transaction(
-    opts: MintReserveOpt,
+    request: MintReserveRequest,
     reserve_tree: ErgoTree,
     inputs: BoxSelection<ErgoBox>,
     context: TxContext,
 ) -> Result<UnsignedTransaction, TransactionError> {
-    let pk = EcPoint::try_from(opts.public_key_hex).map_err(TransactionError::Parsing)?;
+    let pk = EcPoint::try_from(request.public_key_hex).map_err(TransactionError::Parsing)?;
     let mut reserve_box_builder = ErgoBoxCandidateBuilder::new(
-        opts.amount.try_into()?,
+        request.amount.try_into()?,
         reserve_tree,
         context.current_height,
     );

@@ -7,6 +7,11 @@ license.workspace = true
 [dependencies]
 once_cell = "1.18.0"
 ergo_lib = { git = "https://github.com/ergoplatform/sigma-rust.git", branch = "master", package = "ergo-lib", features = ["compiler"] }
+bs58 = "0.5.0"
 ergo_client = { workspace = true }
 serde = { workspace = true }
+serde_json = { workspace = true }
 thiserror = { workspace = true }
+ergo_avltree_rust = "0.1.0"
+sigma-ser = "0.13.0"
+tracing = { workspace = true }

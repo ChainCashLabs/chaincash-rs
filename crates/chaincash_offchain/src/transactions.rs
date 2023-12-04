@@ -1,13 +1,18 @@
+pub mod notes;
 pub mod reserves;
 
-use crate::contracts::RESERVE_CONTRACT;
+use crate::contracts::{NOTE_CONTRACT, RECEIPT_CONTRACT, RESERVE_CONTRACT};
 
-use self::reserves::{mint_reserve_transaction, MintReserveOpt};
+use self::notes::{mint_note_transaction, MintNoteRequest};
+use self::reserves::{mint_reserve_transaction, MintReserveRequest};
 use ergo_client::node::NodeClient;
 use ergo_lib::chain::ergo_box::box_builder::ErgoBoxCandidateBuilderError;
+use ergo_lib::ergo_chain_types::{blake2b256_hash, Digest32};
 use ergo_lib::ergotree_ir::chain::address::AddressEncoderError;
+use ergo_lib::ergotree_ir::chain::ergo_box::box_value::BoxValue;
 use ergo_lib::ergotree_ir::chain::ergo_box::{box_value::BoxValueError, ErgoBox};
 use ergo_lib::ergotree_ir::chain::token::TokenAmountError;
+use ergo_lib::ergotree_ir::serialization::SigmaSerializable;
 use ergo_lib::wallet::box_selector::{
     BoxSelection, BoxSelector, BoxSelectorError, SimpleBoxSelector,
 };
@@ -96,18 +101,52 @@ impl<'a> TransactionService<'a> {
         }
     }
 
-    pub async fn mint_reserve(&self, opts: MintReserveOpt) -> Result<String, crate::Error> {
+    pub async fn mint_reserve(&self, request: MintReserveRequest) -> Result<String, crate::Error> {
         let ctx = self.get_tx_ctx().await?;
         let selected_inputs = self
-            .box_selection_with_amount(opts.amount + ctx.fee)
+            .box_selection_with_amount(request.amount + ctx.fee)
             .await?;
         let reserve_tree = self
             .node
             .extensions()
             .compile_contract(RESERVE_CONTRACT)
             .await?;
-        let unsigned_tx = mint_reserve_transaction(opts, reserve_tree, selected_inputs, ctx)?;
+        let unsigned_tx = mint_reserve_transaction(request, reserve_tree, selected_inputs, ctx)?;
 
+        Ok(self.node.extensions().sign_and_submit(unsigned_tx).await?)
+    }
+
+    pub async fn mint_note(&self, request: MintNoteRequest) -> Result<String, crate::Error> {
+        let reserve_tree_bytes = self
+            .node
+            .extensions()
+            .compile_contract(RESERVE_CONTRACT)
+            .await?
+            .sigma_serialize_bytes()
+            .unwrap();
+        let reserve_hash = bs58::encode(blake2b256_hash(&reserve_tree_bytes[1..])).into_string();
+        let receipt_contract = RECEIPT_CONTRACT.replace("$reserveContractHash", &reserve_hash);
+        let receipt_tree_bytes = self
+            .node
+            .extensions()
+            .compile_contract(&receipt_contract)
+            .await?
+            .sigma_serialize_bytes()
+            .unwrap();
+        let receipt_hash = bs58::encode(blake2b256_hash(&receipt_tree_bytes[1..])).into_string();
+        let ctx = self.get_tx_ctx().await?;
+        let selected_inputs = self
+            .box_selection_with_amount(BoxValue::SAFE_USER_MIN.as_u64() + ctx.fee)
+            .await?;
+        let note_contract = NOTE_CONTRACT
+            .replace("$reserveContractHash", &reserve_hash)
+            .replace("$receiptContractHash", &receipt_hash);
+        let contract_tree = self
+            .node
+            .extensions()
+            .compile_contract(&note_contract)
+            .await?;
+        let unsigned_tx = mint_note_transaction(request, contract_tree, selected_inputs, ctx)?;
         Ok(self.node.extensions().sign_and_submit(unsigned_tx).await?)
     }
 }
