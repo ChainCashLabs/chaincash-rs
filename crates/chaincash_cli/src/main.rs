@@ -2,6 +2,7 @@
 use anyhow::Result;
 use chaincash_app::{ChainCashApp, ChainCashConfig};
 use clap::{Parser, Subcommand};
+use directories::BaseDirs;
 use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -23,8 +24,26 @@ struct Cli {
     log_level: tracing::Level,
 }
 
+// Returns the OS-dependent directory for log files. See: https://github.com/dirs-dev/directories-rs/issues/81
+fn get_log_directory() -> Option<std::path::PathBuf> {
+    let base_dirs = BaseDirs::new()?;
+    if cfg!(target_os = "linux") {
+        Some(base_dirs.state_dir()?.to_owned())
+    } else if cfg!(target_os = "macos") {
+        Some(base_dirs.home_dir().join("Library/Logs/"))
+    } else if cfg!(target_os = "windows") {
+        Some(base_dirs.data_dir().to_owned())
+    } else {
+        None
+    }
+}
+
 impl Cli {
     pub async fn execute(&self) -> Result<()> {
+        let mut log_directory = get_log_directory().unwrap_or(std::env::current_dir()?);
+        log_directory.push("chaincash.log.d");
+        let appender = tracing_appender::rolling::daily(log_directory, "chaincash.log");
+        let (file_writer, _guard) = tracing_appender::non_blocking(appender);
         let tracing_filter =
             tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
                 // axum logs rejections from built-in extractors with the `axum::rejection`
@@ -33,6 +52,7 @@ impl Cli {
             });
         tracing_subscriber::registry()
             .with(tracing_filter)
+            .with(tracing_subscriber::fmt::layer().with_writer(file_writer))
             .with(tracing_subscriber::fmt::layer())
             .init();
 

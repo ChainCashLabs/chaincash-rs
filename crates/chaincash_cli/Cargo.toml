@@ -13,3 +13,5 @@ clap = { version = "4.3.23", features = ["derive"] }
 human-panic = { version = "1.2.2" }
 tokio = { workspace = true }
 anyhow = "1.0.75"
+tracing-appender = "0.2.3"
+directories = "5.0.1"
