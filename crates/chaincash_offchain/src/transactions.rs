@@ -9,6 +9,7 @@ use ergo_client::node::NodeClient;
 use ergo_lib::chain::ergo_box::box_builder::ErgoBoxCandidateBuilderError;
 use ergo_lib::ergo_chain_types::{blake2b256_hash, Digest32};
 use ergo_lib::ergotree_ir::chain::address::AddressEncoderError;
+use ergo_lib::ergotree_ir::chain::ergo_box::box_value::BoxValue;
 use ergo_lib::ergotree_ir::chain::ergo_box::{box_value::BoxValueError, ErgoBox};
 use ergo_lib::ergotree_ir::chain::token::TokenAmountError;
 use ergo_lib::ergotree_ir::serialization::SigmaSerializable;
@@ -134,8 +135,9 @@ impl<'a> TransactionService<'a> {
             .unwrap();
         let receipt_hash = bs58::encode(blake2b256_hash(&receipt_tree_bytes[1..])).into_string();
         let ctx = self.get_tx_ctx().await?;
-        // TODO: need to build the note box before here so we can get the minimum value?
-        let selected_inputs = self.box_selection_with_amount(3289961 + ctx.fee).await?;
+        let selected_inputs = self
+            .box_selection_with_amount(BoxValue::SAFE_USER_MIN.as_u64() + ctx.fee)
+            .await?;
         let note_contract = NOTE_CONTRACT
             .replace("$reserveContractHash", &reserve_hash)
             .replace("$receiptContractHash", &receipt_hash);

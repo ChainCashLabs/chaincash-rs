@@ -1,12 +1,12 @@
+use super::{TransactionError, TxContext};
 use ergo_avltree_rust::authenticated_tree_ops::AuthenticatedTreeOps;
 use ergo_avltree_rust::batch_avl_prover::BatchAVLProver;
 use ergo_avltree_rust::batch_node::{AVLTree, Node, NodeHeader};
-
-use super::{TransactionError, TxContext};
 use ergo_lib::chain::ergo_box::box_builder::ErgoBoxCandidateBuilder;
 use ergo_lib::chain::transaction::unsigned::UnsignedTransaction;
 use ergo_lib::ergo_chain_types::{ADDigest, EcPoint};
 use ergo_lib::ergotree_ir::chain::address::NetworkAddress;
+use ergo_lib::ergotree_ir::chain::ergo_box::box_value::BoxValue;
 use ergo_lib::ergotree_ir::chain::ergo_box::NonMandatoryRegisterId;
 use ergo_lib::ergotree_ir::chain::{ergo_box::ErgoBox, token::Token};
 use ergo_lib::ergotree_ir::ergo_tree::ErgoTree;
@@ -24,7 +24,6 @@ pub struct MintNoteRequest {
     pub gold_amount_mg: u64,
 }
 
-// TODO check serialized bytes match scala - not sure if avl tree digest is correct as default
 pub fn mint_note_transaction(
     request: MintNoteRequest,
     note_tree: ErgoTree,
@@ -69,7 +68,7 @@ pub fn mint_note_transaction(
         amount: request.gold_amount_mg.try_into()?,
     };
     let mut note_box_builder =
-        ErgoBoxCandidateBuilder::new(3289961u64.try_into()?, note_tree, context.current_height);
+        ErgoBoxCandidateBuilder::new(BoxValue::SAFE_USER_MIN, note_tree, context.current_height);
     note_box_builder.add_token(token);
     note_box_builder.set_register_value(NonMandatoryRegisterId::R4, avl_tree.into());
     note_box_builder.set_register_value(NonMandatoryRegisterId::R5, owner_pk.into());
