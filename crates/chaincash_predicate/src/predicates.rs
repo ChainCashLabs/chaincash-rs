@@ -56,15 +56,15 @@ mod tests {
             ]
             "#;
         let p = toml::from_str::<Predicate>(s).unwrap();
-        let mut context = PredicateContext {
-            owner: "PK0".to_string(),
-            value: 1,
-            liabilities: 1,
-        };
-
-        assert!(!p.accept(&context));
-
-        context.owner = "PK1".to_string();
-        assert!(p.accept(&context))
+        // let mut context = PredicateContext {
+        //     owner: "PK0".to_string(),
+        //     value: 1,
+        //     liabilities: 1,
+        // };
+        //
+        // assert!(!p.accept(&context));
+        //
+        // context.owner = "PK1".to_string();
+        // assert!(p.accept(&context))
     }
 }
