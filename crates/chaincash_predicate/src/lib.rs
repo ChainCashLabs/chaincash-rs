@@ -20,18 +20,3 @@ pub struct Config {
     /// Path to enabled predicate configuration files
     pub predicates: Vec<PathBuf>,
 }
-
-// needed:
-// - get issuer of note
-// - get all issued notes by agent
-// - get all signers of note (excluding first which is issuer, ), this is basically just holders
-// except the current holder, the note is only signed when sending
-
-pub struct Note {
-    /// Ergo box id of the note
-    pub id: String,
-    /// Current owner of the note, public key in hex format
-    pub owner: String,
-    pub value: u64,
-    // nominal?
-}

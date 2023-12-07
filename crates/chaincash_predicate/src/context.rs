@@ -1,7 +1,3 @@
-// note value = the amount of tokens * gold oracle price, i.e the note value is the ERG amount
-// reserves are tied to an agent
-
-// so now we only have a note trait & a agent is just a pk
 pub struct Note {
     pub value: u64,
     pub owner: String,
