@@ -1,6 +1,6 @@
+use crate::context::{ContextProvider, PredicateContext};
+use crate::predicates::Accept;
 use serde::{Deserialize, Serialize};
-
-use crate::{Accept, NoteContext};
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Whitelist {
@@ -8,7 +8,7 @@ pub struct Whitelist {
 }
 
 impl Accept for Whitelist {
-    fn accept(&self, context: &NoteContext) -> bool {
+    fn accept<P: ContextProvider>(&self, context: &PredicateContext<P>) -> bool {
         self.agents.contains(&context.owner)
     }
 }
@@ -19,10 +19,9 @@ mod tests {
 
     #[test]
     fn test_returns_true_if_owner_whitelisted() {
-        let context = NoteContext {
-            owner: "PK1".to_string(),
-            value: 1,
-            liabilities: 1,
+        let context = PredicateContext {
+            note: todo!(),
+            provider: todo!(),
         };
         let p = Whitelist {
             agents: vec!["PK0".to_string(), "PK1".to_string()],
@@ -33,10 +32,9 @@ mod tests {
 
     #[test]
     fn test_returns_false_if_owner_not_whitelisted() {
-        let context = NoteContext {
-            owner: "PK3".to_string(),
-            value: 1,
-            liabilities: 1,
+        let context = PredicateContext {
+            note: todo!(),
+            provider: todo!(),
         };
         let p = Whitelist {
             agents: vec!["PK1".to_string()],
