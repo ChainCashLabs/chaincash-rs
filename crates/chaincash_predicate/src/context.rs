@@ -1,3 +1,4 @@
+#[derive(Debug, Clone)]
 pub struct Note {
     pub nanoerg: u64,
     pub owner: String,
@@ -8,7 +9,7 @@ pub struct Note {
 pub trait ContextProvider {
     fn agent_issued_notes(&self, agent: &str) -> Vec<Note>;
 
-    fn agent_reserves(&self, agent: &str) -> u64;
+    fn agent_reserves_nanoerg(&self, agent: &str) -> u64;
 }
 
 pub struct PredicateContext<P: ContextProvider> {
@@ -35,11 +36,11 @@ pub(crate) mod test_util {
             self.agents
                 .iter()
                 .find(|n| n.pk == agent)
-                .map(|a| a.issued_notes)
+                .map(|a| a.issued_notes.clone())
                 .unwrap_or_default()
         }
 
-        fn agent_reserves(&self, agent: &str) -> u64 {
+        fn agent_reserves_nanoerg(&self, agent: &str) -> u64 {
             self.agents
                 .iter()
                 .find(|n| n.pk == agent)

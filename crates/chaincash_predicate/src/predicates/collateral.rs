@@ -16,7 +16,36 @@ impl Default for CollateralAlgorithm {
 
 impl CollateralAlgorithm {
     fn initial<P: ContextProvider>(&self, percent: u16, context: &PredicateContext<P>) -> bool {
-        todo!()
+        let issuer_note_value: u64 = context
+            .provider
+            .agent_issued_notes(&context.note.issuer)
+            .iter()
+            .map(|n| n.nanoerg)
+            .sum();
+        let issuer_reserves = context
+            .provider
+            .agent_reserves_nanoerg(&context.note.issuer);
+        let issuer_collaterization = (issuer_reserves as f64 / issuer_note_value as f64) * 100.0;
+
+        if issuer_collaterization >= percent as f64 {
+            return true;
+        }
+
+        for signer in context.note.signers.iter().skip(1) {
+            let signer_notes = context.provider.agent_issued_notes(&signer);
+            let highest_value_note = signer_notes.iter().max_by_key(|n| n.nanoerg);
+
+            if let Some(note) = highest_value_note {
+                let reserves = context.provider.agent_reserves_nanoerg(&signer);
+                let signer_collaterization = (reserves as f64 / note.nanoerg as f64) * 100.0;
+
+                if signer_collaterization >= percent as f64 {
+                    return true;
+                }
+            }
+        }
+
+        false
     }
 
     pub fn eval<P: ContextProvider>(&self, percent: u16, context: &PredicateContext<P>) -> bool {
@@ -54,9 +83,11 @@ mod tests {
             owner: "owner1".to_owned(),
             signers: vec![issuer_pk.clone()],
         };
+        // issuer of note of interest
+        // has 90% reserves of note of interest
         let issuer = TestAgent {
-            pk: "issuer1".to_owned(),
-            issued_notes: vec![note_of_interest],
+            pk: issuer_pk,
+            issued_notes: vec![note_of_interest.clone()],
             reserves: 900,
         };
         let provider = TestContextProvider {
@@ -66,20 +97,116 @@ mod tests {
             note: note_of_interest,
             provider,
         };
+        // only require 86%
         let p = Collateral {
-            percent: 85,
+            percent: 86,
             algorithm: CollateralAlgorithm::Initial,
         };
-
+        // acceptable
         assert!(p.accept(&context))
     }
 
-    // ^^^ but returns false if under-collaterized
-
     // * if not, take max of notes issued (not passed through) by second signer divided by its reserves, third etc, stop when signer with enough collateralization found
-
-    // * if not, take max of notes issued (not passed through) by second signer divided by its reserves, third etc, stop when signer with enough collateralization found
-    // somehow ensure it starts from the 2nd signer, i.e first non-issuer signer
+    #[test]
+    fn test_initial_returns_true_if_collaterized_by_signer() {
+        let issuer_pk = "issuer1".to_owned();
+        let signer_pk = "signer2".to_owned();
+        // ownership:
+        // issuer1 -> signer2 -> owner5
+        let note_of_interest = Note {
+            nanoerg: 1000,
+            issuer: issuer_pk.clone(),
+            owner: "owner5".to_owned(),
+            signers: vec![issuer_pk.clone(), signer_pk.clone()],
+        };
+        // issuer, only has 10% reserves for note of interest
+        // which is not enough
+        let issuer = TestAgent {
+            pk: issuer_pk,
+            issued_notes: vec![note_of_interest.clone()],
+            reserves: 100,
+        };
+        let signer_note = Note {
+            nanoerg: 1000,
+            issuer: signer_pk.clone(),
+            owner: "owner5".to_owned(),
+            signers: vec![signer_pk.clone()],
+        };
+        // has 1000 reserves, has one note worth 1000
+        // thus has 100% collateral
+        let signer = TestAgent {
+            pk: signer_pk,
+            issued_notes: vec![signer_note],
+            reserves: 1000,
+        };
+        let provider = TestContextProvider {
+            agents: vec![issuer, signer],
+        };
+        let context = PredicateContext {
+            note: note_of_interest,
+            provider,
+        };
+        // requires 100%
+        let p = Collateral {
+            percent: 100,
+            algorithm: CollateralAlgorithm::Initial,
+        };
+        // acceptable
+        assert!(p.accept(&context))
+    }
 
     // * if not found in the whole signatures-chain, acceptance predicate returns false
+    #[test]
+    fn test_initial_returns_false_if_no_required_collateral() {
+        let issuer_pk = "issuer1".to_owned();
+        let signer_pk = "signer2".to_owned();
+        // ownership:
+        // issuer -> signer2 -> owner5
+        let note_of_interest = Note {
+            nanoerg: 1000,
+            issuer: issuer_pk.clone(),
+            owner: "owner5".to_owned(),
+            signers: vec![issuer_pk.clone(), signer_pk.clone()],
+        };
+        // issuer only has 10% collateral
+        let issuer = TestAgent {
+            pk: issuer_pk,
+            issued_notes: vec![note_of_interest.clone()],
+            reserves: 100,
+        };
+        let signer_note = Note {
+            nanoerg: 1000,
+            issuer: signer_pk.clone(),
+            owner: "owner5".to_owned(),
+            signers: vec![signer_pk.clone()],
+        };
+        // this signer note is 100% collaterized, which meets the `percent` requirement
+        // but it is not the highest valued note issued by signer so it is not considered.
+        let signer_note2 = Note {
+            nanoerg: 800,
+            issuer: signer_pk.clone(),
+            owner: "owner5".to_owned(),
+            signers: vec![signer_pk.clone()],
+        };
+        // signer has 800 reserves but their max value note is 1000 value
+        // 80% collateral - we require 100%
+        let signer = TestAgent {
+            pk: signer_pk,
+            issued_notes: vec![signer_note2, signer_note],
+            reserves: 800,
+        };
+        let provider = TestContextProvider {
+            agents: vec![issuer, signer],
+        };
+        let context = PredicateContext {
+            note: note_of_interest,
+            provider,
+        };
+        let p = Collateral {
+            percent: 100,
+            algorithm: CollateralAlgorithm::Initial,
+        };
+        // not acceptable, issuer and signer dont have 100% collateral
+        assert!(!p.accept(&context))
+    }
 }
