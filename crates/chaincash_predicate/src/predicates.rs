@@ -3,10 +3,10 @@ use crate::Error;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
+pub mod blacklist;
 pub mod collateral;
 pub mod or;
 pub mod whitelist;
-pub mod blacklist;
 
 pub trait Accept {
     fn accept<P: ContextProvider>(&self, context: &PredicateContext<P>) -> bool;
