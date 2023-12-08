@@ -21,41 +21,65 @@ impl Accept for Or {
 
 #[cfg(test)]
 mod tests {
-    // use crate::predicates::{collateral::Collateral, whitelist::Whitelist};
-    //
-    // use super::*;
-    //
-    // #[test]
-    // fn test_returns_true_if_any_condition_returns_true() {
-    //     let context = PredicateContext {
-    //         note: todo!(),
-    //         provider: todo!(),
-    //     };
-    //     let p1 = Whitelist {
-    //         agents: vec!["PK2".to_string()],
-    //     };
-    //     let p2 = Collateral { percent: 100 };
-    //     let p = Or {
-    //         conditions: vec![Predicate::Whitelist(p1), Predicate::Collateral(p2)],
-    //     };
-    //
-    //     assert!(p.accept(&context))
-    // }
-    //
-    // #[test]
-    // fn test_returns_false_if_all_conditions_return_false() {
-    //     let context = PredicateContext {
-    //         note: todo!(),
-    //         provider: todo!(),
-    //     };
-    //     let p1 = Whitelist {
-    //         agents: vec!["PK2".to_string()],
-    //     };
-    //     let p2 = Collateral { percent: 200 };
-    //     let p = Or {
-    //         conditions: vec![Predicate::Whitelist(p1), Predicate::Collateral(p2)],
-    //     };
-    //
-    //     assert!(!p.accept(&context))
-    // }
+    use super::*;
+    use crate::context::{test_util::TestContextProvider, Note};
+    use crate::predicates::whitelist::{Whitelist, WhitelistKind};
+
+    #[test]
+    fn test_returns_true_if_any_condition_returns_true() {
+        let issuer_pk = "issuer1".to_owned();
+        let note = Note {
+            nanoerg: 1000,
+            issuer: issuer_pk.clone(),
+            owner: "owner1".to_owned(),
+            signers: vec![issuer_pk.clone()],
+        };
+        let provider = TestContextProvider { agents: vec![] };
+        let context = PredicateContext { note, provider };
+        let acceptable = Whitelist {
+            agents: vec!["PK0".to_string(), "owner1".to_string()],
+            kind: WhitelistKind::Owner,
+        };
+        let unacceptable = Whitelist {
+            agents: vec!["PK0".to_string(), "notowner".to_string()],
+            kind: WhitelistKind::Owner,
+        };
+        let p = Or {
+            conditions: vec![
+                Predicate::Whitelist(unacceptable),
+                Predicate::Whitelist(acceptable),
+            ],
+        };
+
+        assert!(p.accept(&context))
+    }
+
+    #[test]
+    fn test_returns_false_if_all_conditions_return_false() {
+        let issuer_pk = "issuer1".to_owned();
+        let note = Note {
+            nanoerg: 1000,
+            issuer: issuer_pk.clone(),
+            owner: "owner1".to_owned(),
+            signers: vec![issuer_pk.clone()],
+        };
+        let provider = TestContextProvider { agents: vec![] };
+        let context = PredicateContext { note, provider };
+        let unacceptable2 = Whitelist {
+            agents: vec!["PK0".to_string(), "alsonotowner".to_string()],
+            kind: WhitelistKind::Owner,
+        };
+        let unacceptable = Whitelist {
+            agents: vec!["PK0".to_string(), "notowner".to_string()],
+            kind: WhitelistKind::Owner,
+        };
+        let p = Or {
+            conditions: vec![
+                Predicate::Whitelist(unacceptable),
+                Predicate::Whitelist(unacceptable2),
+            ],
+        };
+
+        assert!(!p.accept(&context))
+    }
 }
