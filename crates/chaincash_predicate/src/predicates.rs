@@ -6,6 +6,7 @@ use std::path::PathBuf;
 pub mod collateral;
 pub mod or;
 pub mod whitelist;
+pub mod blacklist;
 
 pub trait Accept {
     fn accept<P: ContextProvider>(&self, context: &PredicateContext<P>) -> bool;
@@ -16,6 +17,7 @@ pub trait Accept {
 pub enum Predicate {
     Or(or::Or),
     Whitelist(whitelist::Whitelist),
+    Blacklist(blacklist::Blacklist),
     Collateral(collateral::Collateral),
 }
 
@@ -35,6 +37,7 @@ impl Accept for Predicate {
         match self {
             Predicate::Or(p) => p.accept(context),
             Predicate::Whitelist(p) => p.accept(context),
+            Predicate::Blacklist(p) => p.accept(context),
             Predicate::Collateral(p) => p.accept(context),
         }
     }
