@@ -1,7 +1,5 @@
-use crate::{
-    context::{ContextProvider, PredicateContext},
-    Error,
-};
+use crate::context::{ContextProvider, PredicateContext};
+use crate::Error;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
@@ -51,20 +49,10 @@ mod tests {
         let s = r#"
             type = "or"
             conditions = [
-                {type = "whitelist", agents = ["PK1", "PK2"]},
+                {type = "whitelist", kind = "owner", agents = ["PK1", "PK2"]},
                 {type = "collateral", percent = 110}
             ]
             "#;
-        let p = toml::from_str::<Predicate>(s).unwrap();
-        // let mut context = PredicateContext {
-        //     owner: "PK0".to_string(),
-        //     value: 1,
-        //     liabilities: 1,
-        // };
-        //
-        // assert!(!p.accept(&context));
-        //
-        // context.owner = "PK1".to_string();
-        // assert!(p.accept(&context))
+        assert!(toml::from_str::<Predicate>(s).is_ok())
     }
 }

@@ -25,21 +25,21 @@ impl CollateralAlgorithm {
         let issuer_reserves = context
             .provider
             .agent_reserves_nanoerg(&context.note.issuer);
-        let issuer_collaterization = (issuer_reserves as f64 / issuer_note_value as f64) * 100.0;
+        let issuer_collateral = (issuer_reserves as f64 / issuer_note_value as f64) * 100.0;
 
-        if issuer_collaterization >= percent as f64 {
+        if issuer_collateral >= percent as f64 {
             return true;
         }
 
         for signer in context.note.signers.iter().skip(1) {
-            let signer_notes = context.provider.agent_issued_notes(&signer);
+            let signer_notes = context.provider.agent_issued_notes(signer);
             let highest_value_note = signer_notes.iter().max_by_key(|n| n.nanoerg);
 
             if let Some(note) = highest_value_note {
-                let reserves = context.provider.agent_reserves_nanoerg(&signer);
-                let signer_collaterization = (reserves as f64 / note.nanoerg as f64) * 100.0;
+                let reserves = context.provider.agent_reserves_nanoerg(signer);
+                let signer_collateral = (reserves as f64 / note.nanoerg as f64) * 100.0;
 
-                if signer_collaterization >= percent as f64 {
+                if signer_collateral >= percent as f64 {
                     return true;
                 }
             }
