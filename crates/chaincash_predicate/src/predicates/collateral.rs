@@ -72,13 +72,13 @@ impl Accept for Collateral {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::context::{test_util::*, Note};
+    use crate::context::{test_util::*, NoteContext};
 
     // * first, take value of notes issued by issuer of a note of interest is divided by its reserves, if collateralization is enough (e.g. 100%), finish
     #[test]
     fn test_initial_returns_true_if_collaterized_by_issuer() {
         let issuer_pk = "issuer1".to_owned();
-        let note_of_interest = Note {
+        let note_of_interest = NoteContext {
             nanoerg: 1000,
             issuer: issuer_pk.clone(),
             owner: "owner1".to_owned(),
@@ -114,7 +114,7 @@ mod tests {
         let signer_pk = "signer2".to_owned();
         // ownership:
         // issuer1 -> signer2 -> owner5
-        let note_of_interest = Note {
+        let note_of_interest = NoteContext {
             nanoerg: 1000,
             issuer: issuer_pk.clone(),
             owner: "owner5".to_owned(),
@@ -127,7 +127,7 @@ mod tests {
             issued_notes: vec![note_of_interest.clone()],
             reserves: 100,
         };
-        let signer_note = Note {
+        let signer_note = NoteContext {
             nanoerg: 1000,
             issuer: signer_pk.clone(),
             owner: "owner5".to_owned(),
@@ -163,7 +163,7 @@ mod tests {
         let signer_pk = "signer2".to_owned();
         // ownership:
         // issuer -> signer2 -> owner5
-        let note_of_interest = Note {
+        let note_of_interest = NoteContext {
             nanoerg: 1000,
             issuer: issuer_pk.clone(),
             owner: "owner5".to_owned(),
@@ -175,7 +175,7 @@ mod tests {
             issued_notes: vec![note_of_interest.clone()],
             reserves: 100,
         };
-        let signer_note = Note {
+        let signer_note = NoteContext {
             nanoerg: 1000,
             issuer: signer_pk.clone(),
             owner: "owner5".to_owned(),
@@ -183,7 +183,7 @@ mod tests {
         };
         // this signer note is 100% collaterized, which meets the `percent` requirement
         // but it is not the highest valued note issued by signer so it is not considered.
-        let signer_note2 = Note {
+        let signer_note2 = NoteContext {
             nanoerg: 800,
             issuer: signer_pk.clone(),
             owner: "owner5".to_owned(),

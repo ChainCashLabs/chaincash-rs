@@ -22,13 +22,13 @@ impl Accept for Or {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::context::{test_util::TestContextProvider, Note};
+    use crate::context::{test_util::TestContextProvider, NoteContext};
     use crate::predicates::whitelist::{Whitelist, WhitelistKind};
 
     #[test]
     fn test_returns_true_if_any_condition_returns_true() {
         let issuer_pk = "issuer1".to_owned();
-        let note = Note {
+        let note = NoteContext {
             nanoerg: 1000,
             issuer: issuer_pk.clone(),
             owner: "owner1".to_owned(),
@@ -57,7 +57,7 @@ mod tests {
     #[test]
     fn test_returns_false_if_all_conditions_return_false() {
         let issuer_pk = "issuer1".to_owned();
-        let note = Note {
+        let note = NoteContext {
             nanoerg: 1000,
             issuer: issuer_pk.clone(),
             owner: "owner1".to_owned(),

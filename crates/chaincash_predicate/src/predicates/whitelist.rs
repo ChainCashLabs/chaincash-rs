@@ -31,12 +31,12 @@ impl Accept for Whitelist {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::context::{test_util::*, Note};
+    use crate::context::{test_util::*, NoteContext};
 
     #[test]
     fn test_returns_true_if_owner_whitelisted() {
         let issuer_pk = "issuer1".to_owned();
-        let note = Note {
+        let note = NoteContext {
             nanoerg: 1000,
             issuer: issuer_pk.clone(),
             owner: "owner1".to_owned(),
@@ -55,7 +55,7 @@ mod tests {
     #[test]
     fn test_returns_false_if_owner_not_whitelisted() {
         let issuer_pk = "issuer1".to_owned();
-        let note = Note {
+        let note = NoteContext {
             nanoerg: 1000,
             issuer: issuer_pk.clone(),
             owner: "owner1".to_owned(),
@@ -73,7 +73,7 @@ mod tests {
     #[test]
     fn test_returns_true_if_issuer_whitelisted() {
         let issuer_pk = "issuer1".to_owned();
-        let note = Note {
+        let note = NoteContext {
             nanoerg: 1000,
             issuer: issuer_pk.clone(),
             owner: "owner1".to_owned(),
@@ -92,7 +92,7 @@ mod tests {
     #[test]
     fn test_returns_false_if_issuer_not_whitelisted() {
         let issuer_pk = "issuer1".to_owned();
-        let note = Note {
+        let note = NoteContext {
             nanoerg: 1000,
             issuer: issuer_pk.clone(),
             owner: "owner1".to_owned(),
@@ -110,7 +110,7 @@ mod tests {
     #[test]
     fn test_returns_true_if_historical_signer_whitelisted() {
         let issuer_pk = "issuer1".to_owned();
-        let note = Note {
+        let note = NoteContext {
             nanoerg: 1000,
             issuer: issuer_pk.clone(),
             owner: "owner1".to_owned(),
@@ -133,7 +133,7 @@ mod tests {
     #[test]
     fn test_returns_false_if_historical_signer_not_whitelisted() {
         let issuer_pk = "issuer1".to_owned();
-        let note = Note {
+        let note = NoteContext {
             nanoerg: 1000,
             issuer: issuer_pk.clone(),
             owner: "owner1".to_owned(),

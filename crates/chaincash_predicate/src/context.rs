@@ -1,19 +1,34 @@
+pub type NanoErg = u64;
+pub type PubKeyHex = String;
+
+/// Context related to a note that holds information required by predicates
+/// to determine if the note is acceptable.
 #[derive(Debug, Clone)]
-pub struct Note {
-    pub nanoerg: u64,
-    pub owner: String,
-    pub issuer: String,
-    pub signers: Vec<String>,
+pub struct NoteContext {
+    /// The nanoerg value of the related note
+    /// The denomination of the note converted to its erg value
+    pub nanoerg: NanoErg,
+    /// Owner of the note as hex encoded public key
+    pub owner: PubKeyHex,
+    /// Issuer of the note as hex encoded public key
+    pub issuer: PubKeyHex,
+    /// Agents that have signed and traded the note
+    pub signers: Vec<PubKeyHex>,
 }
 
+/// Implementors provide a way to access extra context when processing a note
+/// inside a predicate.
 pub trait ContextProvider {
-    fn agent_issued_notes(&self, agent: &str) -> Vec<Note>;
+    /// Get all notes as `NoteContext` issued by the specified agent
+    fn agent_issued_notes(&self, agent: &str) -> Vec<NoteContext>;
 
-    fn agent_reserves_nanoerg(&self, agent: &str) -> u64;
+    /// Get the amount of reserves the specified agent has
+    fn agent_reserves_nanoerg(&self, agent: &str) -> NanoErg;
 }
 
+/// Context passed to predicates during evaluation
 pub struct PredicateContext<P: ContextProvider> {
-    pub note: Note,
+    pub note: NoteContext,
     pub provider: P,
 }
 
@@ -23,7 +38,7 @@ pub(crate) mod test_util {
 
     pub struct TestAgent {
         pub pk: String,
-        pub issued_notes: Vec<Note>,
+        pub issued_notes: Vec<NoteContext>,
         pub reserves: u64,
     }
 
@@ -32,7 +47,7 @@ pub(crate) mod test_util {
     }
 
     impl ContextProvider for TestContextProvider {
-        fn agent_issued_notes(&self, agent: &str) -> Vec<Note> {
+        fn agent_issued_notes(&self, agent: &str) -> Vec<NoteContext> {
             self.agents
                 .iter()
                 .find(|n| n.pk == agent)
