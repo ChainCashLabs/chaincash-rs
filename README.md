@@ -75,7 +75,13 @@ Currently the following predicates are supported:
 
 #### Whitelist
 
-A `whitelist` predicate evaluates to `true` if any of the suppplied agents are the current owner of the note.
+A `whitelist` predicate evaluates to `true` if any of the suppplied agents match depending on the `kind` field.
+
+`whitelist` has subtypes defined in the `kind` field, the following are supported:
+
+- `owner` whitelist is based on the current note holder
+- `issuer` whitelist is based on the note issuer
+- `historical` whitelist checks each holder of the note
 
 If the owner is known to us and trusted we can accept the note without any other consideration.
 
@@ -83,6 +89,25 @@ For example, this could be configured like so:
 
 ```toml
 type = "whitelist"
+kind = "owner"
+agents = ["PK1", "OWNER2"]
+```
+
+#### Blacklist
+
+A `blacklist` predicate evaluates to `true` if none of the suppplied agents match depending on the `kind` field.
+
+`blacklist` has subtypes defined in the `kind` field, the following are supported:
+
+- `owner` blacklist is based on the current note holder
+- `issuer` blacklist is based on the note issuer
+- `historical` blacklist checks each holder of the note
+
+If we want to blacklist all notes issued by `PK1` this could be done like so:
+
+```toml
+type = "blacklist"
+kind = "issuer"
 agents = ["PK1", "OWNER2"]
 ```
 
@@ -111,7 +136,7 @@ For example, if we want to express that a note is accepted if the note is over c
 type = "or"
 conditions = [
     # the owner of the note is either PK1 or PK2
-    {type = "whitelist", agents = ["PK1", "PK2"]},
+    {type = "whitelist", kind = "owner", agents = ["PK1", "PK2"]},
     # the note has at least 100% collateral
     {type = "collateral", percent = 100}
 ]
