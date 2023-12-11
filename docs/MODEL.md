@@ -7,12 +7,13 @@ erDiagram
     NOTE {
         int id PK
         int box_id FK
-        byte[] owner "Encoded group element representing the current owners public key"
+        string owner "Hex encoded public key of the current owner"
+        string issuer "Hex encoded public key of the notes issuer"
     }
     RESERVE {
         int id PK
         int box_id FK
-        byte[] issuer "Encoded group element representing the issuers public key"
+        string owner "Hex encoded public key of the owner of the reserves"
     }
     ERGO_BOX {
         int id PK
@@ -22,8 +23,7 @@ erDiagram
     OWNERSHIP_ENTRY {
         int id PK
         int note_id FK
-        byte[] owner "Encoded group element representing the note owners public key at this point in time"
-        int height "Blockchain height the agent came into onwership of the note"
+        string owner "Hex encoded public key of the note owner at this point in time"
     }
     SIGNATURE {
         int id PK

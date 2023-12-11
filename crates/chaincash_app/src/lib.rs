@@ -1,5 +1,5 @@
 use chaincash_offchain::node::node_from_config;
-use chaincash_predicate::Predicate;
+use chaincash_predicate::predicates::Predicate;
 use chaincash_server::{Server, ServerState};
 use chaincash_store::{ChainCashStore, Update};
 use config::{Environment, File};

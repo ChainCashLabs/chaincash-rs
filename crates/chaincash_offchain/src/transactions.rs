@@ -7,7 +7,7 @@ use self::notes::{mint_note_transaction, MintNoteRequest};
 use self::reserves::{mint_reserve_transaction, MintReserveRequest};
 use ergo_client::node::NodeClient;
 use ergo_lib::chain::ergo_box::box_builder::ErgoBoxCandidateBuilderError;
-use ergo_lib::ergo_chain_types::{blake2b256_hash, Digest32};
+use ergo_lib::ergo_chain_types::blake2b256_hash;
 use ergo_lib::ergotree_ir::chain::address::AddressEncoderError;
 use ergo_lib::ergotree_ir::chain::ergo_box::box_value::BoxValue;
 use ergo_lib::ergotree_ir::chain::ergo_box::{box_value::BoxValueError, ErgoBox};
