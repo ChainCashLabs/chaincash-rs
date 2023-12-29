@@ -1,5 +1,5 @@
 pub struct Note {}
 
-pub trait NoteService: Send + Sync {
+pub trait NoteService {
     fn create(&self) -> Note;
 }
