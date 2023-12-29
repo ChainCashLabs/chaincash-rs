@@ -1,8 +1,9 @@
 use chaincash_offchain::node::node_from_config;
 use chaincash_predicate::predicates::Predicate;
 use chaincash_server::{Server, ServerState};
-use chaincash_store::{ChainCashStore, Update};
+use chaincash_store::{SqliteChainCashStore, Update};
 use config::{Environment, File};
+use std::sync::Arc;
 use thiserror::Error;
 use tracing::info;
 
@@ -55,7 +56,7 @@ impl ChainCashApp {
     }
 
     pub async fn run(&self) -> Result<(), Error> {
-        let store = ChainCashStore::open(&self.config.store.url)?;
+        let store = SqliteChainCashStore::open(&self.config.store.url)?;
 
         if store.has_updates()? {
             store.update()?;
@@ -85,7 +86,7 @@ impl ChainCashApp {
         let node = node_from_config(&self.config.node)?;
 
         let state = ServerState {
-            store,
+            store: Arc::new(Box::new(store)),
             node,
             predicates,
         };
