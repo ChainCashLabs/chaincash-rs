@@ -45,7 +45,10 @@ impl ErgoBoxService {
         Self::create_with_conn(self.pool.get()?.borrow_mut(), b)
     }
 
-    pub fn create_with_conn(conn: &mut ConnectionType, b: NewErgoBox) -> Result<ErgoBox, Error> {
+    pub(crate) fn create_with_conn(
+        conn: &mut ConnectionType,
+        b: NewErgoBox,
+    ) -> Result<ErgoBox, Error> {
         Ok(diesel::insert_into(schema::ergo_boxes::table)
             .values(&b)
             .returning(ErgoBox::as_returning())

@@ -31,16 +31,14 @@ impl ReserveService {
         Self { pool }
     }
 
-    /// Create and store the reserve ergo box.
-    /// The parameter `box_id` is the FK id for the box in the `ergo_boxes` table,
-    /// not to be confused with the ergo network box id.
-    pub fn create(&self, reserve: &ReserveBoxSpec, ergo_box: &ErgoBox) -> Result<Reserve, Error> {
+    pub fn create(&self, ergo_box: &ErgoBox) -> Result<Reserve, Error> {
+        let reserve_spec = ReserveBoxSpec::try_from(ergo_box)?;
         let mut conn = self.pool.get()?;
         let created_box =
             ErgoBoxService::create_with_conn(conn.borrow_mut(), ergo_box.try_into()?)?;
         let new_reserve = NewReserve {
             box_id: created_box.id,
-            owner: &reserve.owner.to_string(),
+            owner: &reserve_spec.owner.to_string(),
         };
         Ok(diesel::insert_into(schema::reserves::table)
             .values(&new_reserve)

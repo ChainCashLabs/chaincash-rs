@@ -13,11 +13,11 @@ pub enum Error {
     #[error("Failed to access register")]
     BadRegister(#[from] RegisterValueError),
 
-    #[error("Box missing field: {0}")]
+    #[error("Box field was unexpectedly empty: {0}")]
     FieldNotSet(String),
 
-    #[error("Field was set to incorrect type: {0}")]
-    InvalidType(SType),
+    #[error("Box field '{field}' was set to incorrect type: {tpe}")]
+    InvalidType { field: String, tpe: SType },
 }
 
 pub struct ReserveBoxSpec {
@@ -36,7 +36,10 @@ impl TryFrom<&ErgoBox> for ReserveBoxSpec {
                 if reg.tpe == SType::SGroupElement {
                     Ok(reg.v.try_extract_into::<EcPoint>().unwrap())
                 } else {
-                    Err(Error::InvalidType(reg.tpe))
+                    Err(Error::InvalidType {
+                        field: "owner".to_owned(),
+                        tpe: reg.tpe,
+                    })
                 }
             })?;
         let refund_height = value
@@ -46,7 +49,10 @@ impl TryFrom<&ErgoBox> for ReserveBoxSpec {
                 if reg.tpe == SType::SLong {
                     Ok(reg.v.try_extract_into::<i64>().unwrap())
                 } else {
-                    Err(Error::InvalidType(reg.tpe))
+                    Err(Error::InvalidType {
+                        field: "refund_height".to_owned(),
+                        tpe: reg.tpe,
+                    })
                 }
             })?;
 

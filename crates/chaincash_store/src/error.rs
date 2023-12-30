@@ -1,4 +1,3 @@
-use ergo_lib::ergotree_ir::serialization::SigmaParsingError;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -9,9 +8,9 @@ pub enum Error {
     #[error("pool error: {0}")]
     Pool(#[from] diesel::r2d2::PoolError),
 
-    #[error("migration error: {0}")]
-    Migration(String),
+    #[error("Failed to update store due to: {0}")]
+    Update(String),
 
-    #[error("Failed to parse bytes")]
-    SigmaParsing(#[from] SigmaParsingError),
+    #[error("Failed to extract spec from box")]
+    BoxSpec(#[from] chaincash_specs::boxes::Error),
 }

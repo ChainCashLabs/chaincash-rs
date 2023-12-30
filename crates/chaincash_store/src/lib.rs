@@ -4,12 +4,11 @@ pub mod notes;
 pub mod reserves;
 pub mod schema;
 
-use ergo_boxes::ErgoBoxService;
-pub use error::Error;
-
 use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::SqliteConnection;
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
+use ergo_boxes::ErgoBoxService;
+pub use error::Error;
 use notes::NoteService;
 use reserves::ReserveService;
 use std::borrow::BorrowMut;
@@ -65,7 +64,7 @@ impl Update for ChainCashStore {
             .get()?
             .borrow_mut()
             .has_pending_migration(MIGRATIONS)
-            .map_err(|_| crate::Error::Migration("failed to check pending migrations".to_string()))
+            .map_err(|_| crate::Error::Update("failed to check pending migrations".to_string()))
     }
 
     fn update(&self) -> Result<(), Error> {
@@ -73,7 +72,7 @@ impl Update for ChainCashStore {
             .get()?
             .borrow_mut()
             .run_pending_migrations(MIGRATIONS)
-            .map_err(|_| crate::Error::Migration("failed to run pending migrations".to_string()))?;
+            .map_err(|_| crate::Error::Update("failed to run pending migrations".to_string()))?;
         Ok(())
     }
 }
