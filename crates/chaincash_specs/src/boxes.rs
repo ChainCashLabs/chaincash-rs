@@ -25,10 +25,10 @@ pub struct ReserveBoxSpec {
     pub refund_height: i64,
 }
 
-impl TryFrom<ErgoBox> for ReserveBoxSpec {
+impl TryFrom<&ErgoBox> for ReserveBoxSpec {
     type Error = Error;
 
-    fn try_from(value: ErgoBox) -> Result<Self, Self::Error> {
+    fn try_from(value: &ErgoBox) -> Result<Self, Self::Error> {
         let owner = value
             .get_register(NonMandatoryRegisterId::R4.into())?
             .ok_or_else(|| Error::FieldNotSet("owner".to_owned()))
