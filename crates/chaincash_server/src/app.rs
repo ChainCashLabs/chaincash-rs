@@ -4,14 +4,13 @@ use chaincash_offchain::TransactionService;
 use chaincash_predicate::predicates::Predicate;
 use chaincash_store::ChainCashStore;
 use ergo_client::node::NodeClient;
-use std::sync::Arc;
 use tracing::info;
 
 use crate::api;
 
 #[derive(Clone)]
 pub struct ServerState {
-    pub store: Arc<Box<dyn ChainCashStore>>,
+    pub store: ChainCashStore,
     pub node: NodeClient,
     pub predicates: Vec<Predicate>,
 }
@@ -61,9 +60,7 @@ impl ServerState {
         .unwrap();
 
         ServerState {
-            store: Arc::new(Box::new(
-                chaincash_store::SqliteChainCashStore::open_in_memory().unwrap(),
-            )),
+            store: chaincash_store::ChainCashStore::open_in_memory().unwrap(),
             node,
             predicates: vec![],
         }
