@@ -60,7 +60,7 @@ impl ServerState {
         .unwrap();
 
         ServerState {
-            store: chaincash_store::ChainCashStore::open_in_memory().unwrap(),
+            store: ChainCashStore::open_in_memory().unwrap(),
             node,
             predicates: vec![],
         }
