@@ -45,7 +45,6 @@ impl ErgoBoxService {
         Self::create_with_conn(self.pool.get()?.borrow_mut(), b)
     }
 
-    /// Provide a static method so it can be easily called by other store services
     pub fn create_with_conn(conn: &mut ConnectionType, b: NewErgoBox) -> Result<ErgoBox, Error> {
         Ok(diesel::insert_into(schema::ergo_boxes::table)
             .values(&b)

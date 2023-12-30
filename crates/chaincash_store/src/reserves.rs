@@ -2,6 +2,7 @@ use crate::ergo_boxes::ErgoBoxService;
 use crate::schema;
 use crate::ConnectionPool;
 use crate::Error;
+use chaincash_specs::boxes::ReserveBoxSpec;
 use diesel::prelude::*;
 use ergo_lib::ergotree_ir::chain::ergo_box::ErgoBox;
 use std::borrow::BorrowMut;
@@ -33,13 +34,13 @@ impl ReserveService {
     /// Create and store the reserve ergo box.
     /// The parameter `box_id` is the FK id for the box in the `ergo_boxes` table,
     /// not to be confused with the ergo network box id.
-    pub fn create_from_box(&self, ergo_box: &ErgoBox) -> Result<Reserve, Error> {
+    pub fn create(&self, reserve: &ReserveBoxSpec, ergo_box: &ErgoBox) -> Result<Reserve, Error> {
         let mut conn = self.pool.get()?;
         let created_box =
             ErgoBoxService::create_with_conn(conn.borrow_mut(), ergo_box.try_into()?)?;
         let new_reserve = NewReserve {
             box_id: created_box.id,
-            owner: "",
+            owner: &reserve.owner.to_string(),
         };
         Ok(diesel::insert_into(schema::reserves::table)
             .values(&new_reserve)

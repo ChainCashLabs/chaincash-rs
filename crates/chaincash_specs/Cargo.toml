@@ -1,0 +1,9 @@
+[package]
+name = "chaincash_specs"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+ergo_lib = { workspace = true }
+thiserror = { workspace = true }

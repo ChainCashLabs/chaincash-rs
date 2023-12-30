@@ -447,9 +447,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "chaincash_specs"
+version = "0.1.0"
+dependencies = [
+ "ergo-lib",
+ "thiserror",
+]
+
+[[package]]
 name = "chaincash_store"
 version = "0.1.0"
 dependencies = [
+ "chaincash_specs",
  "diesel",
  "diesel_migrations",
  "ergo-lib",
