@@ -32,11 +32,11 @@ impl TryFrom<&NetworkBox> for NewErgoBox {
     }
 }
 
-pub struct ErgoBoxService {
+pub struct ErgoBoxRepository {
     pool: ConnectionPool,
 }
 
-impl ErgoBoxService {
+impl ErgoBoxRepository {
     pub(crate) fn new(pool: ConnectionPool) -> Self {
         Self { pool }
     }

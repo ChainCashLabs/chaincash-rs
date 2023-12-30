@@ -2,11 +2,11 @@ use crate::ConnectionPool;
 
 pub struct Note {}
 
-pub struct NoteService {
+pub struct NoteRepository {
     pool: ConnectionPool,
 }
 
-impl NoteService {
+impl NoteRepository {
     pub(crate) fn new(pool: ConnectionPool) -> Self {
         Self { pool }
     }

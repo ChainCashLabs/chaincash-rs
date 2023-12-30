@@ -1,4 +1,4 @@
-use crate::ergo_boxes::ErgoBoxService;
+use crate::ergo_boxes::ErgoBoxRepository;
 use crate::schema;
 use crate::ConnectionPool;
 use crate::Error;
@@ -22,11 +22,11 @@ pub struct NewReserve<'a> {
     pub owner: &'a str,
 }
 
-pub struct ReserveService {
+pub struct ReserveRepository {
     pool: ConnectionPool,
 }
 
-impl ReserveService {
+impl ReserveRepository {
     pub(crate) fn new(pool: ConnectionPool) -> Self {
         Self { pool }
     }
@@ -35,7 +35,7 @@ impl ReserveService {
         let reserve_spec = ReserveBoxSpec::try_from(ergo_box)?;
         let mut conn = self.pool.get()?;
         let created_box =
-            ErgoBoxService::create_with_conn(conn.borrow_mut(), ergo_box.try_into()?)?;
+            ErgoBoxRepository::create_with_conn(conn.borrow_mut(), ergo_box.try_into()?)?;
         let new_reserve = NewReserve {
             box_id: created_box.id,
             owner: &reserve_spec.owner.to_string(),
