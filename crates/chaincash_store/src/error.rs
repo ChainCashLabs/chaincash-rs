@@ -1,3 +1,4 @@
+use ergo_lib::ergotree_ir::serialization::SigmaParsingError;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -10,4 +11,7 @@ pub enum Error {
 
     #[error("migration error: {0}")]
     Migration(String),
+
+    #[error("Failed to parse bytes")]
+    SigmaParsing(#[from] SigmaParsingError),
 }
