@@ -1,10 +1,9 @@
 pub mod notes;
 pub mod reserves;
 
-use crate::contracts::{NOTE_CONTRACT, RECEIPT_CONTRACT, RESERVE_CONTRACT};
-
 use self::notes::{mint_note_transaction, MintNoteRequest};
 use self::reserves::{mint_reserve_transaction, MintReserveRequest};
+use crate::contracts::{NOTE_CONTRACT, RECEIPT_CONTRACT, RESERVE_CONTRACT};
 use ergo_client::node::NodeClient;
 use ergo_lib::chain::ergo_box::box_builder::ErgoBoxCandidateBuilderError;
 use ergo_lib::ergo_chain_types::blake2b256_hash;
@@ -112,8 +111,10 @@ impl<'a> TransactionService<'a> {
             .compile_contract(RESERVE_CONTRACT)
             .await?;
         let unsigned_tx = mint_reserve_transaction(request, reserve_tree, selected_inputs, ctx)?;
-
-        Ok(self.node.extensions().sign_and_submit(unsigned_tx).await?)
+        let submitted_tx = self.node.extensions().sign_and_submit(unsigned_tx).await?;
+        // todo, add reserve to db
+        // should return minted reserve?
+        Ok(submitted_tx.id().to_string())
     }
 
     pub async fn mint_note(&self, request: MintNoteRequest) -> Result<String, crate::Error> {
@@ -147,6 +148,7 @@ impl<'a> TransactionService<'a> {
             .compile_contract(&note_contract)
             .await?;
         let unsigned_tx = mint_note_transaction(request, contract_tree, selected_inputs, ctx)?;
-        Ok(self.node.extensions().sign_and_submit(unsigned_tx).await?)
+        let submitted_tx = self.node.extensions().sign_and_submit(unsigned_tx).await?;
+        Ok(submitted_tx.id().to_string())
     }
 }
