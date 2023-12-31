@@ -31,11 +31,10 @@ impl ReserveRepository {
         Self { pool }
     }
 
-    pub fn create(&self, ergo_box: &ErgoBox) -> Result<Reserve, Error> {
+    pub fn add(&self, ergo_box: &ErgoBox) -> Result<Reserve, Error> {
         let reserve_spec = ReserveBoxSpec::try_from(ergo_box)?;
         let mut conn = self.pool.get()?;
-        let created_box =
-            ErgoBoxRepository::create_with_conn(conn.borrow_mut(), ergo_box.try_into()?)?;
+        let created_box = ErgoBoxRepository::add_with_conn(conn.borrow_mut(), ergo_box)?;
         let new_reserve = NewReserve {
             box_id: created_box.id,
             owner: &reserve_spec.owner.to_string(),

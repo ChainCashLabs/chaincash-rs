@@ -41,16 +41,17 @@ impl ErgoBoxRepository {
         Self { pool }
     }
 
-    pub fn create(&self, b: NewErgoBox) -> Result<ErgoBox, Error> {
-        Self::create_with_conn(self.pool.get()?.borrow_mut(), b)
+    pub fn add(&self, b: &NetworkBox) -> Result<ErgoBox, Error> {
+        Self::add_with_conn(self.pool.get()?.borrow_mut(), b)
     }
 
-    pub(crate) fn create_with_conn(
+    pub(crate) fn add_with_conn(
         conn: &mut ConnectionType,
-        b: NewErgoBox,
+        b: &NetworkBox,
     ) -> Result<ErgoBox, Error> {
+        let new_box = NewErgoBox::try_from(b)?;
         Ok(diesel::insert_into(schema::ergo_boxes::table)
-            .values(&b)
+            .values(new_box)
             .returning(ErgoBox::as_returning())
             .get_result(conn)?)
     }
