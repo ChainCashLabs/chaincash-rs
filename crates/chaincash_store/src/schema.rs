@@ -43,6 +43,7 @@ diesel::table! {
         id -> Integer,
         owner -> Text,
         box_id -> Integer,
+        identifier -> Text,
     }
 }
 
