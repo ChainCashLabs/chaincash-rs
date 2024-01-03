@@ -409,7 +409,6 @@ dependencies = [
 name = "chaincash_offchain"
 version = "0.1.0"
 dependencies = [
- "bs58 0.5.0",
  "ergo-lib",
  "ergo_avltree_rust",
  "ergo_client",
@@ -449,10 +448,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "chaincash_specs"
+name = "chaincash_services"
 version = "0.1.0"
 dependencies = [
+ "bs58 0.5.0",
+ "chaincash_offchain",
+ "chaincash_store",
  "ergo-lib",
+ "ergo_client",
  "thiserror",
 ]
 
@@ -460,7 +463,7 @@ dependencies = [
 name = "chaincash_store"
 version = "0.1.0"
 dependencies = [
- "chaincash_specs",
+ "chaincash_offchain",
  "diesel",
  "diesel_migrations",
  "ergo-lib",

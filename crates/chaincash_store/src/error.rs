@@ -12,5 +12,5 @@ pub enum Error {
     Update(String),
 
     #[error("Failed to extract spec from box")]
-    BoxSpec(#[from] chaincash_specs::boxes::Error),
+    BoxSpec(#[from] chaincash_offchain::boxes::Error),
 }

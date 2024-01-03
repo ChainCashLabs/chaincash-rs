@@ -2,7 +2,7 @@ use crate::ergo_boxes::ErgoBoxRepository;
 use crate::schema;
 use crate::ConnectionPool;
 use crate::Error;
-use chaincash_specs::boxes::ReserveBoxSpec;
+use chaincash_offchain::boxes::ReserveBoxSpec;
 use diesel::prelude::*;
 use ergo_lib::ergotree_ir::chain::ergo_box::ErgoBox;
 use std::borrow::BorrowMut;

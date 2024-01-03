@@ -23,6 +23,7 @@ pub enum Error {
 pub struct ReserveBoxSpec {
     pub owner: EcPoint,
     pub refund_height: i64,
+    pub identifier: String,
 }
 
 impl TryFrom<&ErgoBox> for ReserveBoxSpec {
@@ -55,10 +56,20 @@ impl TryFrom<&ErgoBox> for ReserveBoxSpec {
                     })
                 }
             })?;
+        let identifier = value
+            .tokens
+            .as_ref()
+            .ok_or_else(|| Error::FieldNotSet("reserve box missing NFT".to_owned()))?
+            .get(0)
+            .ok_or_else(|| {
+                Error::FieldNotSet("token at index 0 missing, no identifier nft".to_owned())
+            })?
+            .token_id;
 
         Ok(Self {
             owner,
             refund_height,
+            identifier: String::from(identifier),
         })
     }
 }
