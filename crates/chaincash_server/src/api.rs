@@ -42,12 +42,16 @@ impl AsStatusCode for chaincash_offchain::Error {
 pub enum ApiError {
     #[error("offchain error: {0}")]
     OffChain(#[from] chaincash_offchain::Error),
+
+    #[error("Transaction service error")]
+    TransactionServe(#[from] chaincash_services::transaction::TransactionServiceError),
 }
 
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
         let (status_code, msg) = match self {
             ApiError::OffChain(e) => (e.as_status_code(), e.to_string()),
+            ApiError::TransactionServe(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
         };
         let body = Json(json!({
             "error": {

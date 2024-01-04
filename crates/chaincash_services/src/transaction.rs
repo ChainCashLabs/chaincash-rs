@@ -1,55 +1,34 @@
 use chaincash_offchain::contracts::{NOTE_CONTRACT, RECEIPT_CONTRACT, RESERVE_CONTRACT};
+use chaincash_offchain::transactions::notes::{mint_note_transaction, MintNoteRequest};
+use chaincash_offchain::transactions::reserves::{mint_reserve_transaction, MintReserveRequest};
+use chaincash_offchain::transactions::{TransactionError, TxContext};
 use ergo_client::node::NodeClient;
-use ergo_lib::chain::ergo_box::box_builder::ErgoBoxCandidateBuilderError;
 use ergo_lib::ergo_chain_types::blake2b256_hash;
-use ergo_lib::ergotree_ir::chain::address::AddressEncoderError;
 use ergo_lib::ergotree_ir::chain::ergo_box::box_value::BoxValue;
 use ergo_lib::ergotree_ir::chain::ergo_box::{box_value::BoxValueError, ErgoBox};
-use ergo_lib::ergotree_ir::chain::token::TokenAmountError;
 use ergo_lib::ergotree_ir::serialization::SigmaSerializable;
 use ergo_lib::wallet::box_selector::{
     BoxSelection, BoxSelector, BoxSelectorError, SimpleBoxSelector,
 };
-use ergo_lib::wallet::tx_builder::{TxBuilderError, SUGGESTED_TX_FEE};
+use ergo_lib::wallet::tx_builder::SUGGESTED_TX_FEE;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum TransactionServiceError {
-    #[error("wallet change address error: {0}")]
-    ChangeAddress(String),
+    #[error("Change address not set in wallet")]
+    ChangeAddressNotSet,
 
-    #[error("box value error: {0}")]
-    BoxValue(#[from] BoxValueError),
+    #[error("An error occurred while building transaction")]
+    TransactionBuilding(#[from] TransactionError),
 
-    #[error("token value error: {0}")]
-    TokenValue(#[from] TokenAmountError),
-
-    #[error("missing box: {0}")]
-    MissingBox(String),
-
-    #[error("box builder error: {0}")]
-    BoxBuilder(#[from] ErgoBoxCandidateBuilderError),
-
-    #[error("box selection error: {0}")]
+    #[error("Failed to convert ergox boxes into 'selected' boxes for transaction")]
     BoxSelection(#[from] BoxSelectorError),
 
-    #[error("tx builder error: {0}")]
-    TxBuilder(#[from] TxBuilderError),
+    #[error("Invalid box value supplied")]
+    BoxValue(#[from] BoxValueError),
 
-    #[error("address error: {0}")]
-    Address(#[from] AddressEncoderError),
-
-    #[error("parsing error: {0}")]
-    Parsing(String),
-
-    #[error("node operation failed")]
+    #[error("Node operation failed")]
     Node(#[from] ergo_client::Error),
-}
-
-pub struct TxContext {
-    current_height: u32,
-    change_address: String,
-    fee: u64,
 }
 
 #[derive(Clone)]
@@ -86,9 +65,7 @@ impl<'a> TransactionService<'a> {
         let info = self.node.endpoints().root()?.info().await?;
 
         if wallet_status.change_address.is_empty() {
-            Err(TransactionServiceError::ChangeAddress(
-                "address not set".to_owned(),
-            ))?
+            Err(TransactionServiceError::ChangeAddressNotSet)?
         } else {
             Ok(TxContext {
                 current_height: info.full_height as u32,
@@ -153,6 +130,7 @@ impl<'a> TransactionService<'a> {
             .await?;
         let unsigned_tx = mint_note_transaction(request, contract_tree, selected_inputs, ctx)?;
         let submitted_tx = self.node.extensions().sign_and_submit(unsigned_tx).await?;
+        // todo, add note to db
         Ok(submitted_tx.id().to_string())
     }
 }

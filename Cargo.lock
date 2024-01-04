@@ -436,6 +436,7 @@ dependencies = [
  "axum",
  "chaincash_offchain",
  "chaincash_predicate",
+ "chaincash_services",
  "chaincash_store",
  "ergo_client",
  "hyper 0.14.28",

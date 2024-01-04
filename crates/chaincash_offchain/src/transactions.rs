@@ -1,21 +1,13 @@
 pub mod notes;
 pub mod reserves;
 
-use self::notes::{mint_note_transaction, MintNoteRequest};
-use self::reserves::{mint_reserve_transaction, MintReserveRequest};
-use crate::contracts::{NOTE_CONTRACT, RECEIPT_CONTRACT, RESERVE_CONTRACT};
-use ergo_client::node::NodeClient;
-use ergo_lib::chain::ergo_box::box_builder::ErgoBoxCandidateBuilderError;
-use ergo_lib::ergo_chain_types::blake2b256_hash;
-use ergo_lib::ergotree_ir::chain::address::AddressEncoderError;
-use ergo_lib::ergotree_ir::chain::ergo_box::box_value::BoxValue;
-use ergo_lib::ergotree_ir::chain::ergo_box::{box_value::BoxValueError, ErgoBox};
-use ergo_lib::ergotree_ir::chain::token::TokenAmountError;
-use ergo_lib::ergotree_ir::serialization::SigmaSerializable;
-use ergo_lib::wallet::box_selector::{
-    BoxSelection, BoxSelector, BoxSelectorError, SimpleBoxSelector,
+use ergo_lib::{
+    chain::ergo_box::box_builder::ErgoBoxCandidateBuilderError,
+    ergotree_ir::chain::{
+        address::AddressEncoderError, ergo_box::box_value::BoxValueError, token::TokenAmountError,
+    },
+    wallet::{box_selector::BoxSelectorError, tx_builder::TxBuilderError},
 };
-use ergo_lib::wallet::tx_builder::{TxBuilderError, SUGGESTED_TX_FEE};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -49,7 +41,7 @@ pub enum TransactionError {
 }
 
 pub struct TxContext {
-    current_height: u32,
-    change_address: String,
-    fee: u64,
+    pub current_height: u32,
+    pub change_address: String,
+    pub fee: u64,
 }
