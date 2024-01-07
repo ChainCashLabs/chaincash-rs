@@ -14,7 +14,7 @@ pub enum Error {
     BadRegister(#[from] RegisterValueError),
 
     #[error("Box field was unexpectedly empty: {0}")]
-    FieldNotSet(String),
+    FieldNotSet(&'static str),
 
     #[error("Box field '{field}' was set to incorrect type: {tpe}")]
     InvalidType { field: String, tpe: SType },
@@ -32,7 +32,7 @@ impl TryFrom<&ErgoBox> for ReserveBoxSpec {
     fn try_from(value: &ErgoBox) -> Result<Self, Self::Error> {
         let owner = value
             .get_register(NonMandatoryRegisterId::R4.into())?
-            .ok_or_else(|| Error::FieldNotSet("owner".to_owned()))
+            .ok_or_else(|| Error::FieldNotSet("owner"))
             .and_then(|reg| {
                 if reg.tpe == SType::SGroupElement {
                     Ok(reg.v.try_extract_into::<EcPoint>().unwrap())
@@ -45,7 +45,7 @@ impl TryFrom<&ErgoBox> for ReserveBoxSpec {
             })?;
         let refund_height = value
             .get_register(NonMandatoryRegisterId::R5.into())?
-            .ok_or_else(|| Error::FieldNotSet("refund_height".to_owned()))
+            .ok_or_else(|| Error::FieldNotSet("refund_height"))
             .and_then(|reg| {
                 if reg.tpe == SType::SLong {
                     Ok(reg.v.try_extract_into::<i64>().unwrap())
@@ -59,11 +59,9 @@ impl TryFrom<&ErgoBox> for ReserveBoxSpec {
         let identifier = value
             .tokens
             .as_ref()
-            .ok_or_else(|| Error::FieldNotSet("reserve box missing NFT".to_owned()))?
+            .ok_or_else(|| Error::FieldNotSet("reserve box missing NFT"))?
             .get(0)
-            .ok_or_else(|| {
-                Error::FieldNotSet("token at index 0 missing, no identifier nft".to_owned())
-            })?
+            .ok_or_else(|| Error::FieldNotSet("token at index 0 missing, no identifier nft"))?
             .token_id;
 
         Ok(Self {

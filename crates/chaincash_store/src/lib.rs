@@ -64,7 +64,7 @@ impl Update for ChainCashStore {
             .get()?
             .borrow_mut()
             .has_pending_migration(MIGRATIONS)
-            .map_err(|_| crate::Error::Update("failed to check pending migrations".to_string()))
+            .map_err(|_| crate::Error::Update("failed to check pending migrations"))
     }
 
     fn update(&self) -> Result<(), Error> {
@@ -72,7 +72,7 @@ impl Update for ChainCashStore {
             .get()?
             .borrow_mut()
             .run_pending_migrations(MIGRATIONS)
-            .map_err(|_| crate::Error::Update("failed to run pending migrations".to_string()))?;
+            .map_err(|_| crate::Error::Update("failed to run pending migrations"))?;
         Ok(())
     }
 }

@@ -17,4 +17,3 @@ pub fn node_from_config(cfg: &Config) -> Result<NodeClient, NodeError> {
         Duration::from_secs(5),
     )?)
 }
-
