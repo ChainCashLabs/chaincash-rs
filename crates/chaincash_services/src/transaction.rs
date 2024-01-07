@@ -28,7 +28,7 @@ pub enum TransactionServiceError {
     BoxValue(#[from] BoxValueError),
 
     #[error("Node operation failed")]
-    Node(#[from] ergo_client::Error),
+    Node(#[from] ergo_client::node::NodeError),
 }
 
 #[derive(Clone)]

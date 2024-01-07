@@ -10,10 +10,11 @@ pub struct Config {
     api_key: String,
 }
 
-pub fn node_from_config(cfg: &Config) -> Result<NodeClient, crate::Error> {
+pub fn node_from_config(cfg: &Config) -> Result<NodeClient, NodeError> {
     Ok(NodeClient::from_url_str(
         &cfg.url,
         cfg.api_key.clone(),
         Duration::from_secs(5),
     )?)
 }
+
