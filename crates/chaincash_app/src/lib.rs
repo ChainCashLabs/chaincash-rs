@@ -8,19 +8,19 @@ use tracing::info;
 
 #[derive(Error, Debug)]
 pub enum Error {
-    #[error("store error: {0}")]
+    #[error(transparent)]
     Store(#[from] chaincash_store::Error),
 
-    #[error("server error: {0}")]
+    #[error(transparent)]
     Server(#[from] chaincash_server::Error),
 
-    #[error("offchain error: {0}")]
-    OffChain(#[from] chaincash_offchain::Error),
+    #[error(transparent)]
+    Node(#[from] chaincash_offchain::node::NodeError),
 
     #[error("Failed to load chaincash predicates specified in config file")]
     LoadPredicate(#[from] chaincash_predicate::Error),
 
-    #[error("config error: {0}")]
+    #[error(transparent)]
     Config(#[from] config::ConfigError),
 }
 

@@ -1,7 +1,7 @@
 //! ChainCash payment server creation and serving.
 use axum::{routing::get, Router};
-use chaincash_offchain::TransactionService;
 use chaincash_predicate::predicates::Predicate;
+use chaincash_services::transaction::TransactionService;
 use chaincash_store::ChainCashStore;
 use ergo_client::node::NodeClient;
 use tracing::info;
