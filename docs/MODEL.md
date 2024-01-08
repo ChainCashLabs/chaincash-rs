@@ -15,6 +15,7 @@ erDiagram
     RESERVE {
         int id PK
         int box_id FK
+        int denomination_id FK
         string owner "Hex encoded public key of the owner of the reserves"
     }
     ERGO_BOX {
@@ -31,7 +32,7 @@ erDiagram
     }
     DENOMINATION {
         int id PK
-        int type "Type enum of the denomination, 0 = gold"
+        int type "Type enum of the denomination, 0 = erg, 1 = gold"
         int nanoerg_per_unit "The conversion rate of this denomination in nanoergs"
     }
     NOTE ||--|{ OWNERSHIP_ENTRY : "has"

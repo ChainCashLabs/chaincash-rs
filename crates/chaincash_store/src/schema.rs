@@ -43,6 +43,7 @@ diesel::table! {
         id -> Integer,
         owner -> Text,
         box_id -> Integer,
+        denomination_id -> Integer,
         identifier -> Text,
     }
 }
@@ -50,6 +51,7 @@ diesel::table! {
 diesel::joinable!(notes -> denominations (denomination_id));
 diesel::joinable!(notes -> ergo_boxes (box_id));
 diesel::joinable!(ownership_entries -> notes (note_id));
+diesel::joinable!(reserves -> denominations (denomination_id));
 diesel::joinable!(reserves -> ergo_boxes (box_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
