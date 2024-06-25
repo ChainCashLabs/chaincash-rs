@@ -7,7 +7,8 @@ use diesel::prelude::*;
 use ergo_lib::ergotree_ir::chain::ergo_box::ErgoBox;
 use std::borrow::BorrowMut;
 
-#[derive(Queryable, Selectable)]
+#[derive(Queryable, Selectable, Associations)]
+#[diesel(belongs_to(ErgoBox, foreign_key = box_id))]
 #[diesel(table_name = schema::reserves)]
 pub struct Reserve {
     pub id: i32,
@@ -37,19 +38,27 @@ impl ReserveRepository {
         Self { pool }
     }
 
-    pub fn add(&self, ergo_box: &ErgoBox) -> Result<Reserve, Error> {
-        let reserve_spec = ReserveBoxSpec::try_from(ergo_box)?;
+    pub fn add(&self, reserve_box: &ReserveBoxSpec) -> Result<Reserve, Error> {
+        let ergo_box = reserve_box.ergo_box();
         let mut conn = self.pool.get()?;
         let created_box = ErgoBoxRepository::add_with_conn(conn.borrow_mut(), ergo_box)?;
         let new_reserve = NewReserve {
             box_id: created_box.id,
             denomination_id: 0, // TODO, allow setting different denominations, should be auto detected by inspecting the ErgoBox
-            owner: &reserve_spec.owner.to_string(),
-            identifier: &reserve_spec.identifier,
+            owner: &reserve_box.owner.to_string(),
+            identifier: &reserve_box.identifier,
         };
         Ok(diesel::insert_into(schema::reserves::table)
             .values(&new_reserve)
             .returning(Reserve::as_returning())
             .get_result(conn.borrow_mut())?)
+    }
+    pub fn reserve_boxes(&self) -> Result<Vec<ReserveBoxSpec>, Error> {
+        // let mut conn = self.pool.get()?;
+        // schema::reserves::table
+        //     .inner_join(schema::ergo_boxes::table)
+        //     .load::<(Reserve, ErgoBox)>(&mut conn)
+        //     .map_err(|e| e.into());
+        todo!()
     }
 }

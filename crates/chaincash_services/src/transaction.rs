@@ -1,7 +1,10 @@
 use chaincash_offchain::contracts::{NOTE_CONTRACT, RECEIPT_CONTRACT, RESERVE_CONTRACT};
 use chaincash_offchain::transactions::notes::{mint_note_transaction, MintNoteRequest};
-use chaincash_offchain::transactions::reserves::{mint_reserve_transaction, MintReserveRequest};
+use chaincash_offchain::transactions::reserves::{
+    mint_reserve_transaction, MintReserveRequest, MintReserveResponse,
+};
 use chaincash_offchain::transactions::{TransactionError, TxContext};
+use chaincash_store::ChainCashStore;
 use ergo_client::node::NodeClient;
 use ergo_lib::ergo_chain_types::blake2b256_hash;
 use ergo_lib::ergotree_ir::chain::ergo_box::box_value::BoxValue;
@@ -18,7 +21,7 @@ pub enum TransactionServiceError {
     #[error("Change address not set in wallet")]
     ChangeAddressNotSet,
 
-    #[error("An error occurred while building transaction")]
+    #[error("An error occurred while building transaction: {0}")]
     TransactionBuilding(#[from] TransactionError),
 
     #[error("Failed to convert ergox boxes into 'selected' boxes for transaction")]
@@ -29,16 +32,19 @@ pub enum TransactionServiceError {
 
     #[error("Node operation failed")]
     Node(#[from] ergo_client::node::NodeError),
+    #[error("Store error")]
+    Store(#[from] chaincash_store::Error),
 }
 
 #[derive(Clone)]
 pub struct TransactionService<'a> {
     node: &'a NodeClient,
+    store: &'a ChainCashStore,
 }
 
 impl<'a> TransactionService<'a> {
-    pub fn new(node: &'a NodeClient) -> Self {
-        Self { node }
+    pub fn new(node: &'a NodeClient, store: &'a ChainCashStore) -> Self {
+        Self { node, store }
     }
 
     async fn box_selection_with_amount(
@@ -88,8 +94,12 @@ impl<'a> TransactionService<'a> {
             .extensions()
             .compile_contract(RESERVE_CONTRACT)
             .await?;
-        let unsigned_tx = mint_reserve_transaction(request, reserve_tree, selected_inputs, ctx)?;
-        let submitted_tx = self.node.extensions().sign_and_submit(unsigned_tx).await?;
+        let MintReserveResponse {
+            reserve_box,
+            transaction,
+        } = mint_reserve_transaction(request, reserve_tree, selected_inputs, ctx)?;
+        let submitted_tx = self.node.extensions().sign_and_submit(transaction).await?;
+        self.store.reserves().add(&reserve_box)?;
         // todo, add reserve to db
         // should return minted reserve?
         Ok(submitted_tx.id().to_string())

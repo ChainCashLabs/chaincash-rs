@@ -1,7 +1,7 @@
 use ergo_lib::{
     ergo_chain_types::EcPoint,
     ergotree_ir::{
-        chain::ergo_box::{ErgoBox, NonMandatoryRegisterId, RegisterValueError},
+        chain::ergo_box::{BoxId, ErgoBox, NonMandatoryRegisterId, RegisterValueError},
         mir::constant::TryExtractInto,
         types::stype::SType,
     },
@@ -24,6 +24,16 @@ pub struct ReserveBoxSpec {
     pub owner: EcPoint,
     pub refund_height: i64,
     pub identifier: String,
+    inner: ErgoBox,
+}
+
+impl ReserveBoxSpec {
+    pub fn box_id(&self) -> BoxId {
+        self.inner.box_id()
+    }
+    pub fn ergo_box(&self) -> &ErgoBox {
+        &self.inner
+    }
 }
 
 impl TryFrom<&ErgoBox> for ReserveBoxSpec {
@@ -68,6 +78,7 @@ impl TryFrom<&ErgoBox> for ReserveBoxSpec {
             owner,
             refund_height,
             identifier: String::from(identifier),
+            inner: value.clone(),
         })
     }
 }

@@ -17,7 +17,7 @@ pub struct ServerState {
 
 impl ServerState {
     pub fn tx_service(&self) -> TransactionService {
-        TransactionService::new(&self.node)
+        TransactionService::new(&self.node, &self.store)
     }
 }
 
