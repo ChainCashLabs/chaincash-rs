@@ -22,7 +22,7 @@ pub enum Error {
 
 pub struct ReserveBoxSpec {
     pub owner: EcPoint,
-    pub refund_height: i64,
+    pub refund_height: Option<i64>,
     pub identifier: String,
     inner: ErgoBox,
 }
@@ -55,8 +55,7 @@ impl TryFrom<&ErgoBox> for ReserveBoxSpec {
             })?;
         let refund_height = value
             .get_register(NonMandatoryRegisterId::R5.into())?
-            .ok_or_else(|| Error::FieldNotSet("refund_height"))
-            .and_then(|reg| {
+            .map(|reg| {
                 if reg.tpe == SType::SLong {
                     Ok(reg.v.try_extract_into::<i64>().unwrap())
                 } else {
@@ -65,7 +64,8 @@ impl TryFrom<&ErgoBox> for ReserveBoxSpec {
                         tpe: reg.tpe,
                     })
                 }
-            })?;
+            })
+            .transpose()?;
         let identifier = value
             .tokens
             .as_ref()

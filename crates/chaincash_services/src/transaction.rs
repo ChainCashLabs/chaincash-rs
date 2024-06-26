@@ -24,15 +24,15 @@ pub enum TransactionServiceError {
     #[error("An error occurred while building transaction: {0}")]
     TransactionBuilding(#[from] TransactionError),
 
-    #[error("Failed to convert ergox boxes into 'selected' boxes for transaction")]
+    #[error("Failed to convert ergo boxes into 'selected' boxes for transaction: {0}")]
     BoxSelection(#[from] BoxSelectorError),
 
     #[error("Invalid box value supplied")]
     BoxValue(#[from] BoxValueError),
 
-    #[error("Node operation failed")]
+    #[error("Node operation failed: {0}")]
     Node(#[from] ergo_client::node::NodeError),
-    #[error("Store error")]
+    #[error("Store error: {0}")]
     Store(#[from] chaincash_store::Error),
 }
 
