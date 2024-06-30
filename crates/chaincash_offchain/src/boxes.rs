@@ -6,6 +6,7 @@ use ergo_lib::{
         types::stype::SType,
     },
 };
+use serde::Serialize;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -19,11 +20,12 @@ pub enum Error {
     #[error("Box field '{field}' was set to incorrect type: {tpe}")]
     InvalidType { field: String, tpe: SType },
 }
-
+#[derive(Serialize)]
 pub struct ReserveBoxSpec {
     pub owner: EcPoint,
     pub refund_height: Option<i64>,
     pub identifier: String,
+    #[serde(skip)]
     inner: ErgoBox,
 }
 

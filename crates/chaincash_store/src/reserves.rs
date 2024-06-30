@@ -1,10 +1,11 @@
+use crate::ergo_boxes::ErgoBox;
 use crate::ergo_boxes::ErgoBoxRepository;
 use crate::schema;
 use crate::ConnectionPool;
 use crate::Error;
 use chaincash_offchain::boxes::ReserveBoxSpec;
 use diesel::prelude::*;
-use ergo_lib::ergotree_ir::chain::ergo_box::ErgoBox;
+use ergo_lib::ergotree_ir::chain;
 use std::borrow::BorrowMut;
 
 #[derive(Queryable, Selectable, Associations)]
@@ -54,11 +55,19 @@ impl ReserveRepository {
             .get_result(conn.borrow_mut())?)
     }
     pub fn reserve_boxes(&self) -> Result<Vec<ReserveBoxSpec>, Error> {
-        // let mut conn = self.pool.get()?;
-        // schema::reserves::table
-        //     .inner_join(schema::ergo_boxes::table)
-        //     .load::<(Reserve, ErgoBox)>(&mut conn)
-        //     .map_err(|e| e.into());
-        todo!()
+        let mut conn = self.pool.get()?;
+        let join = schema::reserves::table
+            .inner_join(schema::ergo_boxes::table)
+            .select((Reserve::as_select(), ErgoBox::as_select()))
+            .load::<(Reserve, ErgoBox)>(&mut conn)?;
+        // Panic here if parsing ReserveBox from database fails
+        Ok(join
+            .into_iter()
+            .map(|(_, ergo_box)| {
+                ReserveBoxSpec::try_from(&chain::ergo_box::ErgoBox::try_from(ergo_box)?)
+                    .map_err(Into::into)
+            })
+            .collect::<Result<Vec<_>, Box<dyn std::error::Error>>>()
+            .expect("Failed to parse ReserveBoxSpec from database"))
     }
 }

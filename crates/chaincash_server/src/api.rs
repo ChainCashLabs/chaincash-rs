@@ -24,12 +24,15 @@ impl AsStatusCode for chaincash_offchain::transactions::TransactionError {
 pub enum ApiError {
     #[error("Transaction service error")]
     TransactionService(#[from] chaincash_services::transaction::TransactionServiceError),
+    #[error("Store error: {0}")]
+    StoreError(#[from] chaincash_store::Error),
 }
 
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
         let (status_code, msg) = match self {
             ApiError::TransactionService(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
+            ApiError::StoreError(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
         };
         let body = Json(json!({
             "error": {

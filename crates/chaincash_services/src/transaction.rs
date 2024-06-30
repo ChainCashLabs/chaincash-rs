@@ -1,7 +1,7 @@
 use chaincash_offchain::contracts::{NOTE_CONTRACT, RECEIPT_CONTRACT, RESERVE_CONTRACT};
 use chaincash_offchain::transactions::notes::{mint_note_transaction, MintNoteRequest};
 use chaincash_offchain::transactions::reserves::{
-    mint_reserve_transaction, MintReserveRequest, MintReserveResponse,
+    mint_reserve_transaction, MintReserveRequest, MintReserveResponse, SignedMintReserveResponse,
 };
 use chaincash_offchain::transactions::{TransactionError, TxContext};
 use chaincash_store::ChainCashStore;
@@ -81,10 +81,11 @@ impl<'a> TransactionService<'a> {
         }
     }
 
+    /// Create a mint reserve transaction and add minted reserve box to DB
     pub async fn mint_reserve(
         &self,
         request: MintReserveRequest,
-    ) -> Result<String, TransactionServiceError> {
+    ) -> Result<SignedMintReserveResponse, TransactionServiceError> {
         let ctx = self.get_tx_ctx().await?;
         let selected_inputs = self
             .box_selection_with_amount(request.amount + ctx.fee)
@@ -100,9 +101,11 @@ impl<'a> TransactionService<'a> {
         } = mint_reserve_transaction(request, reserve_tree, selected_inputs, ctx)?;
         let submitted_tx = self.node.extensions().sign_and_submit(transaction).await?;
         self.store.reserves().add(&reserve_box)?;
-        // todo, add reserve to db
         // should return minted reserve?
-        Ok(submitted_tx.id().to_string())
+        Ok(SignedMintReserveResponse {
+            reserve_box,
+            transaction: submitted_tx,
+        })
     }
 
     pub async fn mint_note(

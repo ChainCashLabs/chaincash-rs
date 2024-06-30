@@ -3,6 +3,7 @@ use crate::boxes::ReserveBoxSpec;
 use super::{TransactionError, TxContext};
 use ergo_lib::chain::ergo_box::box_builder::ErgoBoxCandidateBuilder;
 use ergo_lib::chain::transaction::unsigned::UnsignedTransaction;
+use ergo_lib::chain::transaction::Transaction;
 use ergo_lib::ergo_chain_types::EcPoint;
 use ergo_lib::ergotree_ir::chain::address::NetworkAddress;
 use ergo_lib::ergotree_ir::chain::ergo_box::ErgoBox;
@@ -18,19 +19,21 @@ pub struct MintReserveRequest {
     pub amount: u64,
 }
 
-pub struct MintReserveResponse {
+pub struct MintReserveResponse<T: ErgoTransaction> {
     /// Reserve Box
     pub reserve_box: ReserveBoxSpec,
     /// Unsigned transaction that creates reserve box and mints reserve NFT
-    pub transaction: UnsignedTransaction,
+    pub transaction: T,
 }
+
+pub type SignedMintReserveResponse = MintReserveResponse<Transaction>;
 
 pub fn mint_reserve_transaction(
     request: MintReserveRequest,
     reserve_tree: ErgoTree,
     inputs: BoxSelection<ErgoBox>,
     context: TxContext,
-) -> Result<MintReserveResponse, TransactionError> {
+) -> Result<MintReserveResponse<UnsignedTransaction>, TransactionError> {
     let pk = EcPoint::try_from(request.public_key_hex).map_err(TransactionError::Parsing)?;
     let mut reserve_box_builder = ErgoBoxCandidateBuilder::new(
         request.amount.try_into()?,

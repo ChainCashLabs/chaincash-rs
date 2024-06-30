@@ -3,7 +3,8 @@ use std::borrow::BorrowMut;
 use crate::{schema, ConnectionPool, ConnectionType, Error};
 use diesel::prelude::*;
 use ergo_lib::ergotree_ir::{
-    chain::ergo_box::ErgoBox as NetworkBox, serialization::SigmaSerializable,
+    chain::ergo_box::ErgoBox as NetworkBox,
+    serialization::{SigmaParsingError, SigmaSerializable},
 };
 
 #[derive(Queryable, Selectable)]
@@ -32,6 +33,18 @@ impl TryFrom<&NetworkBox> for NewErgoBox {
     }
 }
 
+impl TryFrom<ErgoBox> for NetworkBox {
+    type Error = SigmaParsingError;
+    fn try_from(value: ErgoBox) -> Result<NetworkBox, Self::Error> {
+        let parsed = NetworkBox::sigma_parse_bytes(&value.bytes)?;
+        assert_eq!(
+            parsed.box_id().to_string(),
+            value.ergo_id,
+            "Box read from database does not have matching box id"
+        ); // sanity check
+        Ok(parsed)
+    }
+}
 pub struct ErgoBoxRepository {
     pool: ConnectionPool,
 }
