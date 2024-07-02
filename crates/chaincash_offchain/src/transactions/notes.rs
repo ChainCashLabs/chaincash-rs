@@ -1,9 +1,13 @@
+use crate::boxes::Note;
+use crate::note_history::NoteHistory;
+
 use super::{TransactionError, TxContext};
 use ergo_avltree_rust::authenticated_tree_ops::AuthenticatedTreeOps;
 use ergo_avltree_rust::batch_avl_prover::BatchAVLProver;
 use ergo_avltree_rust::batch_node::{AVLTree, Node, NodeHeader};
 use ergo_lib::chain::ergo_box::box_builder::ErgoBoxCandidateBuilder;
 use ergo_lib::chain::transaction::unsigned::UnsignedTransaction;
+use ergo_lib::chain::transaction::Transaction;
 use ergo_lib::ergo_chain_types::{ADDigest, EcPoint};
 use ergo_lib::ergotree_ir::chain::address::NetworkAddress;
 use ergo_lib::ergotree_ir::chain::ergo_box::box_value::BoxValue;
@@ -12,6 +16,7 @@ use ergo_lib::ergotree_ir::chain::{ergo_box::ErgoBox, token::Token};
 use ergo_lib::ergotree_ir::ergo_tree::ErgoTree;
 use ergo_lib::ergotree_ir::mir::avl_tree_data::{AvlTreeData, AvlTreeFlags};
 use ergo_lib::wallet::box_selector::BoxSelection;
+use ergo_lib::wallet::signing::ErgoTransaction;
 use ergo_lib::wallet::tx_builder::TxBuilder;
 use serde::{Deserialize, Serialize};
 
@@ -24,12 +29,19 @@ pub struct MintNoteRequest {
     pub gold_amount_mg: u64,
 }
 
+pub struct MintNoteResponse<T: ErgoTransaction> {
+    pub note: Note,
+    pub transaction: T,
+}
+
+pub type SignedMintNoteResponse = MintNoteResponse<Transaction>;
+
 pub fn mint_note_transaction(
     request: MintNoteRequest,
     note_tree: ErgoTree,
     inputs: BoxSelection<ErgoBox>,
     context: TxContext,
-) -> Result<UnsignedTransaction, TransactionError> {
+) -> Result<MintNoteResponse<UnsignedTransaction>, TransactionError> {
     let owner_pk =
         EcPoint::try_from(request.owner_public_key_hex).map_err(TransactionError::Parsing)?;
     let prover = BatchAVLProver::new(
@@ -73,12 +85,21 @@ pub fn mint_note_transaction(
     note_box_builder.set_register_value(NonMandatoryRegisterId::R4, avl_tree.into());
     note_box_builder.set_register_value(NonMandatoryRegisterId::R5, owner_pk.into());
     note_box_builder.set_register_value(NonMandatoryRegisterId::R6, 0i64.into());
-    Ok(TxBuilder::new(
+    let unsigned_transaction = TxBuilder::new(
         inputs,
         vec![note_box_builder.build()?],
         context.current_height,
         context.fee.try_into()?,
         NetworkAddress::try_from(context.change_address)?.address(),
     )
-    .build()?)
+    .build()?;
+    let note = Note::new(
+        unsigned_transaction.outputs().first().clone(),
+        NoteHistory::new(),
+    )
+    .unwrap();
+    Ok(MintNoteResponse {
+        note,
+        transaction: unsigned_transaction,
+    })
 }

@@ -1,5 +1,7 @@
 use chaincash_offchain::contracts::{NOTE_CONTRACT, RECEIPT_CONTRACT, RESERVE_CONTRACT};
-use chaincash_offchain::transactions::notes::{mint_note_transaction, MintNoteRequest};
+use chaincash_offchain::transactions::notes::{
+    mint_note_transaction, MintNoteRequest, MintNoteResponse, SignedMintNoteResponse,
+};
 use chaincash_offchain::transactions::reserves::{
     mint_reserve_transaction, MintReserveRequest, MintReserveResponse, SignedMintReserveResponse,
 };
@@ -111,7 +113,7 @@ impl<'a> TransactionService<'a> {
     pub async fn mint_note(
         &self,
         request: MintNoteRequest,
-    ) -> Result<String, TransactionServiceError> {
+    ) -> Result<SignedMintNoteResponse, TransactionServiceError> {
         let reserve_tree_bytes = self
             .node
             .extensions()
@@ -141,9 +143,13 @@ impl<'a> TransactionService<'a> {
             .extensions()
             .compile_contract(&note_contract)
             .await?;
-        let unsigned_tx = mint_note_transaction(request, contract_tree, selected_inputs, ctx)?;
-        let submitted_tx = self.node.extensions().sign_and_submit(unsigned_tx).await?;
+        let MintNoteResponse { note, transaction } =
+            mint_note_transaction(request, contract_tree, selected_inputs, ctx)?;
+        let submitted_tx = self.node.extensions().sign_and_submit(transaction).await?;
         // todo, add note to db
-        Ok(submitted_tx.id().to_string())
+        Ok(SignedMintNoteResponse {
+            note,
+            transaction: submitted_tx,
+        })
     }
 }
