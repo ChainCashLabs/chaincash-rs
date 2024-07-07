@@ -10,6 +10,8 @@ use ergo_lib::{
 };
 use thiserror::Error;
 
+use crate::note_history::NoteHistoryError;
+
 #[derive(Debug, Error)]
 pub enum TransactionError {
     #[error("wallet change address error: {0}")]
@@ -36,8 +38,17 @@ pub enum TransactionError {
     #[error("address error: {0}")]
     Address(#[from] AddressEncoderError),
 
+    #[error("Note history error: {0}")]
+    NoteHistoryError(#[from] NoteHistoryError),
+
     #[error("parsing error: {0}")]
     Parsing(String),
+
+    #[error("output amount {output_amount} > input amount {input_amount}")]
+    NoteAmountError {
+        input_amount: u64,
+        output_amount: u64,
+    },
 }
 
 pub struct TxContext {

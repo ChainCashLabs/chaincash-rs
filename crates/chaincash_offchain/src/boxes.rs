@@ -1,12 +1,14 @@
-use crate::note_history::NoteHistory;
+use crate::note_history::{sign, NoteHistory, SignedOwnershipEntry};
 use ergo_lib::{
     ergo_chain_types::{ADDigest, EcPoint},
+    ergotree_interpreter::sigma_protocol::wscalar::Wscalar,
     ergotree_ir::{
         chain::{
             ergo_box::{BoxId, ErgoBox, NonMandatoryRegisterId, RegisterValueError},
             token::{Token, TokenAmount, TokenId},
         },
         mir::{avl_tree_data::AvlTreeData, constant::TryExtractInto},
+        serialization::SigmaSerializable,
         types::stype::SType,
     },
 };
@@ -116,13 +118,41 @@ impl Note {
             inner: note_box,
         })
     }
+
+    fn bytes_to_sign(&self) -> Vec<u8> {
+        let mut buf = Vec::with_capacity(48);
+        buf.extend_from_slice(&self.length.to_be_bytes());
+        buf.extend_from_slice(&self.amount.as_u64().to_be_bytes());
+        buf.extend_from_slice(&self.note_id.sigma_serialize_bytes().unwrap());
+        buf
+    }
+
+    // Sign a note against reserve id, returning a new ownership entry
+    // TODO: consider passing ReserveBoxSpec instead
+    pub(crate) fn sign_note(
+        &self,
+        reserve_id: TokenId,
+        private_key: Wscalar,
+    ) -> SignedOwnershipEntry {
+        let bytes_to_sign = self.bytes_to_sign();
+        let signature = sign(&bytes_to_sign, private_key);
+        SignedOwnershipEntry {
+            position: self.length,
+            reserve_id,
+            amount: self.amount.into(),
+            signature,
+        }
+    }
+    pub fn ergo_box(&self) -> &ErgoBox {
+        &self.inner
+    }
 }
 
 #[derive(Serialize)]
 pub struct ReserveBoxSpec {
     pub owner: EcPoint,
     pub refund_height: Option<i64>,
-    pub identifier: String,
+    pub identifier: TokenId,
     #[serde(skip)]
     inner: ErgoBox,
 }
@@ -177,7 +207,7 @@ impl TryFrom<&ErgoBox> for ReserveBoxSpec {
         Ok(Self {
             owner,
             refund_height,
-            identifier: String::from(identifier),
+            identifier,
             inner: value.clone(),
         })
     }
