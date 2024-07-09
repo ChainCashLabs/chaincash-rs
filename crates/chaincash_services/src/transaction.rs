@@ -146,7 +146,7 @@ impl<'a> TransactionService<'a> {
         let MintNoteResponse { note, transaction } =
             mint_note_transaction(request, contract_tree, selected_inputs, ctx)?;
         let submitted_tx = self.node.extensions().sign_and_submit(transaction).await?;
-        // todo, add note to db
+        self.store.notes().add_note(&note)?;
         Ok(SignedMintNoteResponse {
             note,
             transaction: submitted_tx,

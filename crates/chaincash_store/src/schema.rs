@@ -20,11 +20,11 @@ diesel::table! {
 diesel::table! {
     notes (id) {
         id -> Integer,
+        identifier -> Text,
         box_id -> Integer,
         denomination_id -> Integer,
-        value -> Integer,
+        value -> BigInt,
         owner -> Text,
-        issuer -> Text,
     }
 }
 
@@ -32,9 +32,10 @@ diesel::table! {
     ownership_entries (id) {
         id -> Integer,
         note_id -> Integer,
+        amount -> BigInt,
+        position -> BigInt,
         reserve_nft_id -> Text,
-        a -> Binary,
-        z -> Integer,
+        signature -> Binary,
     }
 }
 

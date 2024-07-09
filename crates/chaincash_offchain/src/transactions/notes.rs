@@ -129,6 +129,14 @@ fn create_note_candidate(
     Ok(box_candidate.build()?)
 }
 
+pub struct SpendNoteResponse<T: ErgoTransaction> {
+    pub transaction: T,
+    pub recipient_note: Note,
+    pub change_note: Option<Note>,
+}
+
+pub type SignedSpendNoteResponse = SpendNoteResponse<Transaction>;
+
 pub fn spend_note_transaction(
     note: &Note,
     reserve: &ReserveBoxSpec,
@@ -137,7 +145,7 @@ pub fn spend_note_transaction(
     amount: u64,
     wallet_boxes: Vec<ErgoBox>,
     context: TxContext,
-) -> Result<UnsignedTransaction, TransactionError> {
+) -> Result<SpendNoteResponse<UnsignedTransaction>, TransactionError> {
     let change_amount =
         note.amount
             .as_u64()
@@ -162,6 +170,7 @@ pub fn spend_note_transaction(
     let signature = note.sign_note(reserve.identifier, private_key);
     let proof = new_history.add_commitment(signature.clone())?;
     let new_digest = new_history.to_avltree();
+
     let box_selection = BoxSelection {
         boxes: boxes.try_into().unwrap(),
         change_boxes,
@@ -205,7 +214,20 @@ pub fn spend_note_transaction(
     tx_builder.set_data_inputs(vec![DataInput {
         box_id: reserve.ergo_box().box_id(),
     }]);
-    Ok(tx_builder.build()?)
+    let transaction = tx_builder.build()?;
+
+    let recipient_note = Note::new(
+        transaction.outputs().get(0).unwrap().clone(),
+        new_history.clone(),
+    )
+    .unwrap();
+    let change_note = has_change
+        .then(|| Note::new(transaction.outputs().get(1).unwrap().clone(), new_history).unwrap());
+    Ok(SpendNoteResponse {
+        transaction,
+        recipient_note,
+        change_note,
+    })
 }
 
 #[cfg(test)]
@@ -321,7 +343,7 @@ mod test {
 
         let mut wallet_boxes = vec![create_wallet_box(*public_key.clone(), 1_000_000_000)];
         let recipient = DlogProverInput::random().public_image().h;
-        let unsigned_transaction = spend_note_transaction(
+        let note_response = spend_note_transaction(
             &note,
             &reserve,
             private_key.w.clone(),
@@ -341,7 +363,7 @@ mod test {
         .unwrap();
         wallet_boxes.push(note.ergo_box().clone());
         let tx_context = TransactionContext::new(
-            unsigned_transaction,
+            note_response.transaction,
             wallet_boxes,
             vec![reserve.ergo_box().clone()],
         )

@@ -1,4 +1,4 @@
-use crate::note_history::{sign, NoteHistory, SignedOwnershipEntry};
+use crate::note_history::{sign, NoteHistory, OwnershipEntry};
 use ergo_lib::{
     ergo_chain_types::{ADDigest, EcPoint},
     ergotree_interpreter::sigma_protocol::wscalar::Wscalar,
@@ -129,14 +129,10 @@ impl Note {
 
     // Sign a note against reserve id, returning a new ownership entry
     // TODO: consider passing ReserveBoxSpec instead
-    pub(crate) fn sign_note(
-        &self,
-        reserve_id: TokenId,
-        private_key: Wscalar,
-    ) -> SignedOwnershipEntry {
+    pub(crate) fn sign_note(&self, reserve_id: TokenId, private_key: Wscalar) -> OwnershipEntry {
         let bytes_to_sign = self.bytes_to_sign();
         let signature = sign(&bytes_to_sign, private_key);
-        SignedOwnershipEntry {
+        OwnershipEntry {
             position: self.length,
             reserve_id,
             amount: self.amount.into(),

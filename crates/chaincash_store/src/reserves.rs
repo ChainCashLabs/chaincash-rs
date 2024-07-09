@@ -47,7 +47,7 @@ impl ReserveRepository {
             box_id: created_box.id,
             denomination_id: 0, // TODO, allow setting different denominations, should be auto detected by inspecting the ErgoBox
             owner: &reserve_box.owner.to_string(),
-            identifier: &reserve_box.identifier,
+            identifier: &String::from(reserve_box.identifier),
         };
         Ok(diesel::insert_into(schema::reserves::table)
             .values(&new_reserve)

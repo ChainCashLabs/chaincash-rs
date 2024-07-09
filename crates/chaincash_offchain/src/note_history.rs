@@ -100,7 +100,7 @@ impl TryFrom<&[u8]> for Signature {
 
 #[cfg_attr(test, derive(proptest_derive::Arbitrary))]
 #[derive(Debug, Clone)]
-pub struct SignedOwnershipEntry {
+pub struct OwnershipEntry {
     pub position: u64,
     #[cfg_attr(
         test,
@@ -115,22 +115,27 @@ pub struct SignedOwnershipEntry {
 
 #[derive(Clone)]
 pub struct NoteHistory {
-    signatures: Vec<SignedOwnershipEntry>,
+    ownership_entries: Vec<OwnershipEntry>,
 }
 
 impl NoteHistory {
     pub fn new() -> Self {
-        NoteHistory { signatures: vec![] }
+        NoteHistory {
+            ownership_entries: vec![],
+        }
+    }
+    pub fn ownership_entries(&self) -> &[OwnershipEntry] {
+        &self.ownership_entries
     }
     // Return prover built from signatures. Since BatchAVLProver isn't thread-safe we have to rebuild it each time
     // TODO: make BatchAVLProver thread-safe, then prover can be memoized, otherwise NoteHistory slows down significantly with more signatures
     fn prover(&self) -> Result<BatchAVLProver, NoteHistoryError> {
-        build_prover(&self.signatures)
+        build_prover(&self.ownership_entries)
     }
     /// Add a signature and generate insertion proof
     pub fn add_commitment(
         &mut self,
-        commitment: SignedOwnershipEntry,
+        commitment: OwnershipEntry,
     ) -> Result<SerializedAdProof, NoteHistoryError> {
         let mut prover = self.prover()?;
         let key = commitment
@@ -143,7 +148,7 @@ impl NoteHistory {
         prover
             .perform_one_operation(&insert_op)
             .map_err(|_| NoteHistoryError::DuplicateReserveKey)?;
-        self.signatures.push(commitment);
+        self.ownership_entries.push(commitment);
         Ok(prover.generate_proof())
     }
     pub fn digest(&self) -> Digest<33> {
@@ -163,7 +168,7 @@ impl NoteHistory {
 }
 
 fn build_prover<'a>(
-    signatures: impl IntoIterator<Item = &'a SignedOwnershipEntry>,
+    signatures: impl IntoIterator<Item = &'a OwnershipEntry>,
 ) -> Result<BatchAVLProver, NoteHistoryError> {
     let mut prover = BatchAVLProver::new(
         AVLTree::new(
@@ -176,7 +181,7 @@ fn build_prover<'a>(
     signatures
         .into_iter()
         .map(
-            |SignedOwnershipEntry {
+            |OwnershipEntry {
                  reserve_id,
                  signature,
                  ..
@@ -233,7 +238,7 @@ mod test {
     use proptest::collection::vec;
     use proptest::proptest;
 
-    use crate::note_history::{build_prover, NoteHistory, Signature, SignedOwnershipEntry};
+    use crate::note_history::{build_prover, NoteHistory, OwnershipEntry, Signature};
     proptest! {
         #[test]
         fn test_signature_roundtrip(signature in any::<Signature>()) {
@@ -241,7 +246,7 @@ mod test {
             assert_eq!(Signature::try_from(&serialized[..]).unwrap(), signature);
         }
         #[test]
-        fn test_prover_verifier(commitments in vec(any::<SignedOwnershipEntry>(), 0..100)) {
+        fn test_prover_verifier(commitments in vec(any::<OwnershipEntry>(), 0..100)) {
             let prover = build_prover(commitments.iter()).unwrap();
             let mut note_history = NoteHistory::new();
             for commitment in commitments {
