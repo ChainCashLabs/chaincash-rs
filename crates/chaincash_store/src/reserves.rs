@@ -54,6 +54,7 @@ impl ReserveRepository {
             .returning(Reserve::as_returning())
             .get_result(conn.borrow_mut())?)
     }
+
     pub fn reserve_boxes(&self) -> Result<Vec<ReserveBoxSpec>, Error> {
         let mut conn = self.pool.get()?;
         let join = schema::reserves::table

@@ -7,7 +7,7 @@ use ergo_lib::ergotree_ir::{
     serialization::{SigmaParsingError, SigmaSerializable},
 };
 
-#[derive(Queryable, Selectable)]
+#[derive(Queryable, Selectable, Clone)]
 #[diesel(table_name = schema::ergo_boxes)]
 pub struct ErgoBox {
     pub id: i32,

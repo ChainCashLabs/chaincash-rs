@@ -27,6 +27,7 @@ pub enum Error {
     InvalidType { field: String, tpe: SType },
     #[error("Box field '{field}' was not in bounds")]
     InvalidField { field: &'static str },
+
     #[error("AVL digest for box could not be rebuilt from note history. note history digest: {history_digest}, box digest: {box_digest}")]
     InvalidAVLDigest {
         box_digest: ADDigest,

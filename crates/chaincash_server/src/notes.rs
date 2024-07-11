@@ -1,6 +1,6 @@
 use axum::extract::State;
 use axum::response::{IntoResponse, Response};
-use axum::routing::post;
+use axum::routing::{get, post};
 use axum::{Json, Router};
 use chaincash_offchain::transactions::notes::{MintNoteRequest, SignedMintNoteResponse};
 use serde_json::json;
@@ -19,6 +19,13 @@ async fn mint_note(
     Ok(response.into_response())
 }
 
+async fn list_notes(State(state): State<crate::ServerState>) -> Result<Response, ApiError> {
+    let notes = state.store.notes().notes()?;
+    let response = Json(notes);
+    Ok(response.into_response())
+}
 pub fn router() -> Router<crate::ServerState> {
-    Router::new().route("/mint", post(mint_note))
+    Router::new()
+        .route("/", get(list_notes))
+        .route("/mint", post(mint_note))
 }
