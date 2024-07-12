@@ -1,6 +1,7 @@
 use chaincash_offchain::contracts::{NOTE_CONTRACT, RECEIPT_CONTRACT, RESERVE_CONTRACT};
 use chaincash_offchain::transactions::notes::{
-    mint_note_transaction, MintNoteRequest, MintNoteResponse, SignedMintNoteResponse,
+    mint_note_transaction, spend_note_transaction, MintNoteRequest, MintNoteResponse,
+    SignedMintNoteResponse, SignedSpendNoteResponse, SpendNoteResponse,
 };
 use chaincash_offchain::transactions::reserves::{
     mint_reserve_transaction, MintReserveRequest, MintReserveResponse, SignedMintReserveResponse,
@@ -8,14 +9,16 @@ use chaincash_offchain::transactions::reserves::{
 use chaincash_offchain::transactions::{TransactionError, TxContext};
 use chaincash_store::ChainCashStore;
 use ergo_client::node::NodeClient;
-use ergo_lib::ergo_chain_types::blake2b256_hash;
+use ergo_lib::ergo_chain_types::{blake2b256_hash, EcPoint};
 use ergo_lib::ergotree_ir::chain::ergo_box::box_value::BoxValue;
 use ergo_lib::ergotree_ir::chain::ergo_box::{box_value::BoxValueError, ErgoBox};
+use ergo_lib::ergotree_ir::chain::token::{TokenAmount, TokenId};
 use ergo_lib::ergotree_ir::serialization::SigmaSerializable;
 use ergo_lib::wallet::box_selector::{
     BoxSelection, BoxSelector, BoxSelectorError, SimpleBoxSelector,
 };
 use ergo_lib::wallet::tx_builder::SUGGESTED_TX_FEE;
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -34,8 +37,22 @@ pub enum TransactionServiceError {
 
     #[error("Node operation failed: {0}")]
     Node(#[from] ergo_client::node::NodeError),
+
     #[error("Store error: {0}")]
     Store(#[from] chaincash_store::Error),
+
+    #[error("Reserve Box not found")]
+    ReserveBoxNotFound,
+}
+
+// TODO: find a better place to put this. probably somewhere here in chaincash_services but maybe in a seperate file
+#[derive(Serialize, Deserialize)]
+pub struct SpendNoteRequest {
+    /// ID of note in database
+    note_id: i32,
+    reserve_id: TokenId,
+    recipient_pubkey: EcPoint,
+    amount: TokenAmount,
 }
 
 #[derive(Clone)]
@@ -103,7 +120,6 @@ impl<'a> TransactionService<'a> {
         } = mint_reserve_transaction(request, reserve_tree, selected_inputs, ctx)?;
         let submitted_tx = self.node.extensions().sign_and_submit(transaction).await?;
         self.store.reserves().add(&reserve_box)?;
-        // should return minted reserve?
         Ok(SignedMintReserveResponse {
             reserve_box,
             transaction: submitted_tx,
@@ -150,6 +166,55 @@ impl<'a> TransactionService<'a> {
         Ok(SignedMintNoteResponse {
             note,
             transaction: submitted_tx,
+        })
+    }
+
+    pub async fn spend_note(
+        &self,
+        request: SpendNoteRequest,
+    ) -> Result<SignedSpendNoteResponse, TransactionServiceError> {
+        let note = self.store.notes().get_note_box(request.note_id)?;
+        // TODO: write a query to do this instead of loading all reserve boxes
+        let reserve = self
+            .store
+            .reserves()
+            .reserve_boxes()?
+            .into_iter()
+            .find(|reserve| reserve.identifier == request.reserve_id)
+            .ok_or(TransactionServiceError::ReserveBoxNotFound)?;
+        let private_key = self
+            .node
+            .extensions()
+            .get_private_key(note.owner.clone())
+            .await?
+            .w;
+        let wallet_boxes = self.node.extensions().get_utxos().await?;
+        let tx_context = self.get_tx_ctx().await?;
+        let SpendNoteResponse {
+            transaction,
+            recipient_note,
+            change_note,
+        } = spend_note_transaction(
+            &note,
+            &reserve,
+            private_key,
+            request.recipient_pubkey,
+            *request.amount.as_u64(),
+            wallet_boxes,
+            tx_context,
+        )?;
+
+        let transaction = self.node.extensions().sign_and_submit(transaction).await?;
+        self.store.notes().delete_note(request.note_id)?;
+        println!("Deleted note, TODO");
+        if let Some(ref change_note) = change_note {
+            self.store.notes().add_note(&change_note)?;
+        }
+
+        Ok(SignedSpendNoteResponse {
+            transaction,
+            recipient_note,
+            change_note,
         })
     }
 }

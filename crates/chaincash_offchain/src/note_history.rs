@@ -266,7 +266,7 @@ mod test {
                         .unwrap();
                 bv.perform_one_operation(&Operation::Insert(KeyValue { key: commitment.reserve_id.sigma_serialize_bytes().unwrap().into(), value: commitment.signature.serialize().into() })).unwrap();
             }
-            assert_eq!(note_history.digest(), prover.digest().unwrap().to_vec().try_into().unwrap())
+            assert_eq!(&note_history.digest().0[..], &prover.digest().unwrap()[..]);
         }
     }
 }

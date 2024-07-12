@@ -167,7 +167,7 @@ pub fn spend_note_transaction(
     boxes.push(note.ergo_box().clone());
 
     let mut new_history = note.history.clone();
-    let signature = note.sign_note(reserve.identifier, private_key);
+    let signature = note.sign_note(reserve.identifier, private_key)?;
     let proof = new_history.add_commitment(signature.clone())?;
     let new_digest = new_history.to_avltree();
 

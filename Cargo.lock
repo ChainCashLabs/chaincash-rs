@@ -476,6 +476,7 @@ dependencies = [
  "chaincash_store",
  "ergo-lib",
  "ergo_client",
+ "serde",
  "thiserror",
 ]
 
@@ -1031,7 +1032,7 @@ dependencies = [
 [[package]]
 name = "ergo_client"
 version = "0.1.0"
-source = "git+https://github.com/SethDusek/ergo_client.git#e6f82b584cb8400a50c6946f6d78273bd2fccbab"
+source = "git+https://github.com/SethDusek/ergo_client.git#e473ecd2bdb49e838792138813ad5bf7e120d41c"
 dependencies = [
  "anyhow",
  "ergo-lib",

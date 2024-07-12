@@ -3,6 +3,7 @@ use std::borrow::BorrowMut;
 use chaincash_offchain::note_history::NoteHistory;
 use diesel::{
     associations::{Associations, GroupedBy, Identifiable},
+    debug_query,
     deserialize::Queryable,
     prelude::Insertable,
     BelongingToDsl, Connection, ExpressionMethods, QueryDsl, RunQueryDsl, Selectable,
@@ -49,6 +50,7 @@ pub struct OwnershipEntry {
     amount: i64,
     position: i64,
     reserve_nft_id: String,
+    #[serde(skip)]
     signature: Vec<u8>,
 }
 
@@ -157,6 +159,7 @@ impl NoteRepository {
             .select(Note::as_select())
             .load(conn.borrow_mut())?;
         Ok(OwnershipEntry::belonging_to(&notes)
+            .order_by(schema::ownership_entries::position.asc())
             .load(conn.borrow_mut())?
             .grouped_by(&notes)
             .into_iter()
@@ -193,10 +196,12 @@ impl NoteRepository {
             .filter(schema::notes::id.eq(note_id))
             .select(schema::ergo_boxes::id)
             .first::<i32>(conn.borrow_mut())?;
-        // Delete box id. This will delete note and its ownership entries as well (cascade delete)
-        diesel::delete(schema::ergo_boxes::table)
-            .filter(schema::ergo_boxes::id.eq(box_id))
-            .execute(conn.borrow_mut())?;
+        dbg!(box_id); // TODO
+                      // Delete box id. This will delete note and its ownership entries as well (cascade delete)
+        let query =
+            diesel::delete(schema::ergo_boxes::table).filter(schema::ergo_boxes::id.eq(box_id));
+        println!("{}", debug_query(&query));
+        query.execute(conn.borrow_mut())?;
         Ok(())
     }
 }

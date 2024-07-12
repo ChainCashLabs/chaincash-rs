@@ -10,10 +10,13 @@ use ergo_lib::{
 };
 use thiserror::Error;
 
-use crate::note_history::NoteHistoryError;
+use crate::{boxes, note_history::NoteHistoryError};
 
 #[derive(Debug, Error)]
 pub enum TransactionError {
+    #[error("Box error: {0}")]
+    BoxError(#[from] boxes::Error),
+
     #[error("wallet change address error: {0}")]
     ChangeAddress(String),
 

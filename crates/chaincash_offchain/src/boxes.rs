@@ -1,6 +1,9 @@
 use crate::note_history::{sign, NoteHistory, OwnershipEntry};
 use ergo_lib::{
-    ergo_chain_types::{ADDigest, EcPoint},
+    ergo_chain_types::{
+        ec_point::{exponentiate, generator},
+        ADDigest, EcPoint,
+    },
     ergotree_interpreter::sigma_protocol::wscalar::Wscalar,
     ergotree_ir::{
         chain::{
@@ -32,6 +35,13 @@ pub enum Error {
     InvalidAVLDigest {
         box_digest: ADDigest,
         history_digest: ADDigest,
+    },
+    #[error(
+        "Private key provided derives to public key {found_pubkey}, expected {expected_pubkey}"
+    )]
+    InvalidPrivateKey {
+        expected_pubkey: EcPoint,
+        found_pubkey: EcPoint,
     },
 }
 
@@ -130,15 +140,26 @@ impl Note {
 
     // Sign a note against reserve id, returning a new ownership entry
     // TODO: consider passing ReserveBoxSpec instead
-    pub(crate) fn sign_note(&self, reserve_id: TokenId, private_key: Wscalar) -> OwnershipEntry {
+    pub(crate) fn sign_note(
+        &self,
+        reserve_id: TokenId,
+        private_key: Wscalar,
+    ) -> Result<OwnershipEntry, Error> {
+        let public_key = exponentiate(&generator(), private_key.as_scalar_ref());
+        if public_key != self.owner {
+            return Err(Error::InvalidPrivateKey {
+                expected_pubkey: self.owner.clone(),
+                found_pubkey: public_key,
+            });
+        }
         let bytes_to_sign = self.bytes_to_sign();
         let signature = sign(&bytes_to_sign, private_key);
-        OwnershipEntry {
+        Ok(OwnershipEntry {
             position: self.length,
             reserve_id,
             amount: self.amount.into(),
             signature,
-        }
+        })
     }
     pub fn ergo_box(&self) -> &ErgoBox {
         &self.inner

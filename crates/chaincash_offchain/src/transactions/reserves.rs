@@ -67,7 +67,7 @@ pub fn mint_reserve_transaction(
     .build()?;
 
     Ok(MintReserveResponse {
-        reserve_box: unsigned_transaction.outputs().first().try_into().unwrap(), // TODO: is unwrap() a good idea here? Since reserve box is built by us any error in TryFrom is a bug in chaincash-rs and not user error
+        reserve_box: unsigned_transaction.outputs().first().try_into().unwrap(),
         transaction: unsigned_transaction,
     })
 }
