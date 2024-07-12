@@ -14,7 +14,7 @@ use std::borrow::BorrowMut;
 pub struct Reserve {
     pub id: i32,
     pub box_id: i32,
-    pub denomination_id: i32,
+    pub denomination_id: Option<i32>,
     /// NFT ID that uniquely identifies this reserve.
     pub identifier: String,
     /// Owner of the reserve, GE encoded as hex string.
@@ -25,7 +25,7 @@ pub struct Reserve {
 #[diesel(table_name = schema::reserves)]
 pub struct NewReserve<'a> {
     pub box_id: i32,
-    pub denomination_id: i32,
+    pub denomination_id: Option<i32>,
     pub identifier: &'a str,
     pub owner: &'a str,
 }
@@ -45,14 +45,14 @@ impl ReserveRepository {
         let created_box = ErgoBoxRepository::add_with_conn(conn.borrow_mut(), ergo_box)?;
         let new_reserve = NewReserve {
             box_id: created_box.id,
-            denomination_id: 0, // TODO, allow setting different denominations, should be auto detected by inspecting the ErgoBox
+            denomination_id: None, // TODO, allow setting different denominations, should be auto detected by inspecting the ErgoBox
             owner: &reserve_box.owner.to_string(),
             identifier: &String::from(reserve_box.identifier),
         };
-        Ok(diesel::insert_into(schema::reserves::table)
+        let query = diesel::insert_into(schema::reserves::table)
             .values(&new_reserve)
-            .returning(Reserve::as_returning())
-            .get_result(conn.borrow_mut())?)
+            .returning(Reserve::as_returning());
+        Ok(query.get_result(conn.borrow_mut())?)
     }
 
     pub fn reserve_boxes(&self) -> Result<Vec<ReserveBoxSpec>, Error> {

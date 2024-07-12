@@ -4,7 +4,8 @@ pub mod notes;
 pub mod reserves;
 pub mod schema;
 
-use diesel::r2d2::{ConnectionManager, Pool};
+use diesel::connection::SimpleConnection;
+use diesel::r2d2::{ConnectionManager, CustomizeConnection, ManageConnection, Pool};
 use diesel::SqliteConnection;
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use ergo_boxes::ErgoBoxRepository;
@@ -34,10 +35,23 @@ pub struct ChainCashStore {
 
 impl ChainCashStore {
     pub fn open<S: Into<String>>(store_url: S) -> Result<Self, Error> {
+        #[derive(Debug)]
+        struct CustomizedConnection;
+        type ConnectionManagerError =
+            <ConnectionManager<ConnectionType> as ManageConnection>::Error;
+        impl CustomizeConnection<ConnectionType, ConnectionManagerError> for CustomizedConnection {
+            fn on_acquire(&self, conn: &mut ConnectionType) -> Result<(), ConnectionManagerError> {
+                conn.batch_execute("PRAGMA foreign_keys=ON;")
+                    .map_err(|e| ConnectionManagerError::QueryError(e))?;
+                Ok(())
+            }
+        }
         let manager = ConnectionManager::<ConnectionType>::new(store_url);
 
         Ok(Self {
-            pool: Pool::builder().build(manager)?,
+            pool: Pool::builder()
+                .connection_customizer(Box::new(CustomizedConnection))
+                .build(manager)?,
         })
     }
 

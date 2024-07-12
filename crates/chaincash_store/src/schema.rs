@@ -22,7 +22,7 @@ diesel::table! {
         id -> Integer,
         identifier -> Text,
         box_id -> Integer,
-        denomination_id -> Integer,
+        denomination_id -> Nullable<Integer>,
         value -> BigInt,
         owner -> Text,
     }
@@ -44,7 +44,7 @@ diesel::table! {
         id -> Integer,
         owner -> Text,
         box_id -> Integer,
-        denomination_id -> Integer,
+        denomination_id -> Nullable<Integer>,
         identifier -> Text,
     }
 }

@@ -3,7 +3,7 @@ use std::borrow::BorrowMut;
 use crate::{schema, ConnectionPool, ConnectionType, Error};
 use diesel::prelude::*;
 use ergo_lib::ergotree_ir::{
-    chain::ergo_box::ErgoBox as NetworkBox,
+    chain::ergo_box::{BoxId, ErgoBox as NetworkBox},
     serialization::{SigmaParsingError, SigmaSerializable},
 };
 
@@ -67,5 +67,12 @@ impl ErgoBoxRepository {
             .values(new_box)
             .returning(ErgoBox::as_returning())
             .get_result(conn)?)
+    }
+
+    pub(crate) fn delete_with_conn(conn: &mut ConnectionType, box_id: BoxId) -> Result<(), Error> {
+        diesel::delete(schema::ergo_boxes::table)
+            .filter(schema::ergo_boxes::ergo_id.eq(box_id.to_string()))
+            .execute(conn)?;
+        Ok(())
     }
 }

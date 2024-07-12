@@ -23,7 +23,7 @@ pub struct Note {
     pub id: i32,
     #[serde(skip)]
     box_id: i32,
-    pub denomination_id: i32,
+    pub denomination_id: Option<i32>,
     pub identifier: String,
     pub value: i64,
     pub owner: String,
@@ -34,7 +34,7 @@ pub struct Note {
 struct NewNote<'a> {
     identifier: &'a str,
     box_id: i32,
-    denomination_id: i32,
+    denomination_id: Option<i32>,
     value: i64,
     owner: &'a str,
 }
@@ -173,7 +173,7 @@ impl NoteRepository {
             let new_note = NewNote {
                 identifier: &String::from(note.note_id),
                 box_id: created_box.id,
-                denomination_id: 0, // TODO
+                denomination_id: None, // TODO
                 value: note.amount.into(),
                 owner: &note.owner.to_string(),
             };
@@ -184,5 +184,19 @@ impl NoteRepository {
             self.add_history(conn.borrow_mut(), &inserted_note, &note.history)?;
             Ok(inserted_note)
         })
+    }
+
+    pub fn delete_note(&self, note_id: i32) -> Result<(), Error> {
+        let mut conn = self.pool.get()?;
+        let box_id = schema::notes::table
+            .inner_join(schema::ergo_boxes::table)
+            .filter(schema::notes::id.eq(note_id))
+            .select(schema::ergo_boxes::id)
+            .first::<i32>(conn.borrow_mut())?;
+        // Delete box id. This will delete note and its ownership entries as well (cascade delete)
+        diesel::delete(schema::ergo_boxes::table)
+            .filter(schema::ergo_boxes::id.eq(box_id))
+            .execute(conn.borrow_mut())?;
+        Ok(())
     }
 }
