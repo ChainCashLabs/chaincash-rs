@@ -18,8 +18,9 @@ unknown-registry = "deny"
 unknown-git = "deny"
 # temporary, new versions of these crates need to be published
 allow-git = [
-  "https://github.com/ergoplatform/sigma-rust.git",
-  "https://github.com/ross-weir/ergo_client.git",
+    "https://github.com/ergoplatform/sigma-rust.git",
+    "https://github.com/ross-weir/ergo_client.git",
+    "https://github.com/SethDusek/ergo_client.git",
 ]
 
 [licenses]
