@@ -329,8 +329,7 @@ mod test {
         note_box_candidate
             .set_register_value(NonMandatoryRegisterId::R5, (*public_key).clone().into());
         note_box_candidate.set_register_value(NonMandatoryRegisterId::R6, 0i64.into());
-        let note = Note::new(create_box(note_box_candidate.build().unwrap()), history).unwrap();
-        note
+        Note::new(create_box(note_box_candidate.build().unwrap()), history).unwrap()
     }
 
     // Test spending a note with change output

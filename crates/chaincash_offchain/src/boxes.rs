@@ -40,8 +40,8 @@ pub enum Error {
         "Private key provided derives to public key {found_pubkey}, expected {expected_pubkey}"
     )]
     InvalidPrivateKey {
-        expected_pubkey: EcPoint,
-        found_pubkey: EcPoint,
+        expected_pubkey: String,
+        found_pubkey: String,
     },
 }
 
@@ -148,8 +148,8 @@ impl Note {
         let public_key = exponentiate(&generator(), private_key.as_scalar_ref());
         if public_key != self.owner {
             return Err(Error::InvalidPrivateKey {
-                expected_pubkey: self.owner.clone(),
-                found_pubkey: public_key,
+                expected_pubkey: self.owner.to_string(),
+                found_pubkey: public_key.to_string(),
             });
         }
         let bytes_to_sign = self.bytes_to_sign();
