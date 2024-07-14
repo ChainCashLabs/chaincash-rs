@@ -45,7 +45,6 @@ pub enum TransactionServiceError {
     ReserveBoxNotFound,
 }
 
-// TODO: find a better place to put this. probably somewhere here in chaincash_services but maybe in a seperate file
 #[derive(Serialize, Deserialize)]
 pub struct SpendNoteRequest {
     /// ID of note in database
@@ -174,14 +173,10 @@ impl<'a> TransactionService<'a> {
         request: SpendNoteRequest,
     ) -> Result<SignedSpendNoteResponse, TransactionServiceError> {
         let note = self.store.notes().get_note_box(request.note_id)?;
-        // TODO: write a query to do this instead of loading all reserve boxes
         let reserve = self
             .store
             .reserves()
-            .reserve_boxes()?
-            .into_iter()
-            .find(|reserve| reserve.identifier == request.reserve_id)
-            .ok_or(TransactionServiceError::ReserveBoxNotFound)?;
+            .get_reserve_by_identifier(&request.reserve_id)?;
         let private_key = self
             .node
             .extensions()
@@ -206,7 +201,6 @@ impl<'a> TransactionService<'a> {
 
         let transaction = self.node.extensions().sign_and_submit(transaction).await?;
         self.store.notes().delete_note(request.note_id)?;
-        println!("Deleted note, TODO");
         if let Some(ref change_note) = change_note {
             self.store.notes().add_note(&change_note)?;
         }

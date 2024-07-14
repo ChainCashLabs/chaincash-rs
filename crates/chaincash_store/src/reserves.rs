@@ -6,6 +6,7 @@ use crate::Error;
 use chaincash_offchain::boxes::ReserveBoxSpec;
 use diesel::prelude::*;
 use ergo_lib::ergotree_ir::chain;
+use ergo_lib::ergotree_ir::chain::token::TokenId;
 use std::borrow::BorrowMut;
 
 #[derive(Queryable, Selectable, Associations)]
@@ -53,6 +54,20 @@ impl ReserveRepository {
             .values(&new_reserve)
             .returning(Reserve::as_returning());
         Ok(query.get_result(conn.borrow_mut())?)
+    }
+
+    pub fn get_reserve_by_identifier(&self, identifier: &TokenId) -> Result<ReserveBoxSpec, Error> {
+        let mut conn = self.pool.get()?;
+        let ergo_box = schema::reserves::table
+            .filter(schema::reserves::identifier.eq(String::from(identifier.clone())))
+            .inner_join(schema::ergo_boxes::table)
+            .select(ErgoBox::as_select())
+            .first(&mut conn)?;
+        Ok(ReserveBoxSpec::try_from(
+            &chain::ergo_box::ErgoBox::try_from(ergo_box)
+                .expect("Failed to parse ErgoBox from database"),
+        )
+        .expect("Failed to parse ReserveBoxSpec from database"))
     }
 
     pub fn reserve_boxes(&self) -> Result<Vec<ReserveBoxSpec>, Error> {

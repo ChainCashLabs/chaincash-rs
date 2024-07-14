@@ -42,10 +42,10 @@ diesel::table! {
 diesel::table! {
     reserves (id) {
         id -> Integer,
+        identifier -> Text,
         owner -> Text,
         box_id -> Integer,
         denomination_id -> Nullable<Integer>,
-        identifier -> Text,
     }
 }
 
