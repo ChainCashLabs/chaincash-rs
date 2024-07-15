@@ -1,7 +1,7 @@
 //! ChainCash payment server creation and serving.
 use axum::{routing::get, Router};
-use chaincash_offchain::TransactionService;
 use chaincash_predicate::predicates::Predicate;
+use chaincash_services::transaction::TransactionService;
 use chaincash_store::ChainCashStore;
 use ergo_client::node::NodeClient;
 use tracing::info;
@@ -17,7 +17,7 @@ pub struct ServerState {
 
 impl ServerState {
     pub fn tx_service(&self) -> TransactionService {
-        TransactionService::new(&self.node)
+        TransactionService::new(&self.node, &self.store)
     }
 }
 

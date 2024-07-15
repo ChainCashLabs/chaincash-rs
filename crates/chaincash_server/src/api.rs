@@ -8,14 +8,6 @@ trait AsStatusCode {
     fn as_status_code(&self) -> StatusCode;
 }
 
-// Despite the name this doesn't represent a clientside error in the context of server/client
-// it means the node client library threw an error
-impl AsStatusCode for chaincash_offchain::ClientError {
-    fn as_status_code(&self) -> StatusCode {
-        StatusCode::INTERNAL_SERVER_ERROR
-    }
-}
-
 impl AsStatusCode for chaincash_offchain::node::NodeError {
     fn as_status_code(&self) -> StatusCode {
         StatusCode::INTERNAL_SERVER_ERROR
@@ -28,26 +20,19 @@ impl AsStatusCode for chaincash_offchain::transactions::TransactionError {
     }
 }
 
-impl AsStatusCode for chaincash_offchain::Error {
-    fn as_status_code(&self) -> StatusCode {
-        match self {
-            chaincash_offchain::Error::Client(e) => e.as_status_code(),
-            chaincash_offchain::Error::Node(e) => e.as_status_code(),
-            chaincash_offchain::Error::Transaction(e) => e.as_status_code(),
-        }
-    }
-}
-
 #[derive(Debug, Error)]
 pub enum ApiError {
-    #[error("offchain error: {0}")]
-    OffChain(#[from] chaincash_offchain::Error),
+    #[error("Transaction service error")]
+    TransactionService(#[from] chaincash_services::transaction::TransactionServiceError),
+    #[error("Store error: {0}")]
+    StoreError(#[from] chaincash_store::Error),
 }
 
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
         let (status_code, msg) = match self {
-            ApiError::OffChain(e) => (e.as_status_code(), e.to_string()),
+            ApiError::TransactionService(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
+            ApiError::StoreError(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
         };
         let body = Json(json!({
             "error": {

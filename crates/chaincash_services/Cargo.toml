@@ -1,0 +1,14 @@
+[package]
+name = "chaincash_services"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+bs58 = "0.5.0"
+serde = { workspace = true }
+ergo_lib = { workspace = true }
+ergo_client = { workspace = true }
+chaincash_store = { path = "../chaincash_store" }
+chaincash_offchain = { path = "../chaincash_offchain" }
+thiserror = { workspace = true }

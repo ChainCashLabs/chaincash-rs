@@ -7,12 +7,14 @@ erDiagram
     NOTE {
         int id PK
         int box_id FK
+        int denomination_id FK
+        int value "The value of the note in its denomination, this is the amount of tokens in tokens(0)"
         string owner "Hex encoded public key of the current owner"
-        string issuer "Hex encoded public key of the notes issuer"
     }
     RESERVE {
         int id PK
         int box_id FK
+        int denomination_id FK
         string owner "Hex encoded public key of the owner of the reserves"
     }
     ERGO_BOX {
@@ -23,15 +25,18 @@ erDiagram
     OWNERSHIP_ENTRY {
         int id PK
         int note_id FK
-        string owner "Hex encoded public key of the note owner at this point in time"
+        int amount "Maximum amount that can be redeemed from reserve"
+        int position "Index of signature in history"
+        string[32] reserve_nft_id "Reserve NFT id used as the key for the signed data inserted into the ergo box avltree"
+        byte[] signature "signature"
     }
-    SIGNATURE {
+    DENOMINATION {
         int id PK
-        int note_id FK
+        int type "Type enum of the denomination, 0 = erg, 1 = gold"
+        int nanoerg_per_unit "The conversion rate of this denomination in nanoergs"
     }
-    NOTE ||--o{ RESERVE : "backed by"
     NOTE ||--|{ OWNERSHIP_ENTRY : "has"
-    NOTE ||--|{ SIGNATURE : "has"
+    NOTE ||--|| DENOMINATION : "has"
     NOTE ||--|| ERGO_BOX : "is a"
     RESERVE ||--|| ERGO_BOX : "is a"
 ```
