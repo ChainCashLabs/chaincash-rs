@@ -4,7 +4,8 @@ use chaincash_offchain::transactions::notes::{
     SignedMintNoteResponse, SignedSpendNoteResponse, SpendNoteResponse,
 };
 use chaincash_offchain::transactions::reserves::{
-    mint_reserve_transaction, MintReserveRequest, MintReserveResponse, SignedMintReserveResponse,
+    mint_reserve_transaction, top_up_reserve_transaction, MintReserveRequest, ReserveResponse,
+    SignedReserveResponse,
 };
 use chaincash_offchain::transactions::{TransactionError, TxContext};
 use chaincash_store::ChainCashStore;
@@ -18,7 +19,7 @@ use ergo_lib::wallet::box_selector::{
     BoxSelection, BoxSelector, BoxSelectorError, SimpleBoxSelector,
 };
 use ergo_lib::wallet::tx_builder::SUGGESTED_TX_FEE;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -45,13 +46,20 @@ pub enum TransactionServiceError {
     ReserveBoxNotFound,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Deserialize)]
 pub struct SpendNoteRequest {
     /// ID of note in database
     note_id: i32,
     reserve_id: TokenId,
     recipient_pubkey: EcPoint,
     amount: TokenAmount,
+}
+
+#[derive(Deserialize)]
+pub struct TopUpReserveRequest {
+    /// ID of note in database
+    reserve_id: TokenId,
+    top_up_amount: u64,
 }
 
 #[derive(Clone)]
@@ -103,7 +111,7 @@ impl<'a> TransactionService<'a> {
     pub async fn mint_reserve(
         &self,
         request: MintReserveRequest,
-    ) -> Result<SignedMintReserveResponse, TransactionServiceError> {
+    ) -> Result<SignedReserveResponse, TransactionServiceError> {
         let ctx = self.get_tx_ctx().await?;
         let selected_inputs = self
             .box_selection_with_amount(request.amount + ctx.fee)
@@ -113,13 +121,35 @@ impl<'a> TransactionService<'a> {
             .extensions()
             .compile_contract(RESERVE_CONTRACT)
             .await?;
-        let MintReserveResponse {
+        let ReserveResponse {
             reserve_box,
             transaction,
         } = mint_reserve_transaction(request, reserve_tree, selected_inputs, ctx)?;
         let submitted_tx = self.node.extensions().sign_and_submit(transaction).await?;
-        self.store.reserves().add(&reserve_box)?;
-        Ok(SignedMintReserveResponse {
+        self.store.reserves().add_or_update(&reserve_box)?;
+        Ok(SignedReserveResponse {
+            reserve_box,
+            transaction: submitted_tx,
+        })
+    }
+
+    pub async fn top_up_reserve(
+        &self,
+        request: TopUpReserveRequest,
+    ) -> Result<SignedReserveResponse, TransactionServiceError> {
+        let ctx = self.get_tx_ctx().await?;
+        let wallet_boxes = self.node.extensions().get_utxos().await?;
+        let reserve = self
+            .store
+            .reserves()
+            .get_reserve_by_identifier(&request.reserve_id)?;
+        let ReserveResponse {
+            reserve_box,
+            transaction,
+        } = top_up_reserve_transaction(&reserve, wallet_boxes, request.top_up_amount, &ctx)?;
+        let submitted_tx = self.node.extensions().sign_and_submit(transaction).await?;
+        self.store.reserves().add_or_update(&reserve_box)?;
+        Ok(SignedReserveResponse {
             reserve_box,
             transaction: submitted_tx,
         })
@@ -202,7 +232,7 @@ impl<'a> TransactionService<'a> {
         let transaction = self.node.extensions().sign_and_submit(transaction).await?;
         self.store.notes().delete_note(request.note_id)?;
         if let Some(ref change_note) = change_note {
-            self.store.notes().add_note(&change_note)?;
+            self.store.notes().add_note(change_note)?;
         }
 
         Ok(SignedSpendNoteResponse {

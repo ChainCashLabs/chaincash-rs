@@ -52,6 +52,9 @@ pub enum TransactionError {
         input_amount: u64,
         output_amount: u64,
     },
+
+    #[error("Must top-up reserve with atleast 1 ERG, got {}", *.0 as f64 / 1_000_000_000.0)]
+    TopUpAmountError(u64),
 }
 
 pub struct TxContext {
