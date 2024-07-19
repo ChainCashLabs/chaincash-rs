@@ -18,7 +18,7 @@ k256 = "0.13.3"
 rand = { version = "0.8.5", features = ["std", "std_rng"] }
 
 [dev-dependencies]
-ergo_lib = { git = "https://github.com/ergoplatform/sigma-rust.git", branch = "master", package = "ergo-lib", features = [
+ergo_lib = { git = "https://github.com/ergoplatform/sigma-rust.git", branch = "develop", package = "ergo-lib", features = [
     "compiler",
     "arbitrary",
 ] }

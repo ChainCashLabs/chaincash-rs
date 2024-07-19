@@ -2,6 +2,7 @@ use crate::boxes::ReserveBoxSpec;
 
 use super::{TransactionError, TxContext};
 use ergo_lib::chain::ergo_box::box_builder::ErgoBoxCandidateBuilder;
+use ergo_lib::chain::transaction::ergo_transaction::ErgoTransaction;
 use ergo_lib::chain::transaction::unsigned::UnsignedTransaction;
 use ergo_lib::chain::transaction::Transaction;
 use ergo_lib::ergo_chain_types::EcPoint;
@@ -12,7 +13,6 @@ use ergo_lib::ergotree_ir::chain::token::TokenAmount;
 use ergo_lib::ergotree_ir::chain::{ergo_box::NonMandatoryRegisterId, token::Token};
 use ergo_lib::ergotree_ir::ergo_tree::ErgoTree;
 use ergo_lib::wallet::box_selector::{BoxSelector, SimpleBoxSelector};
-use ergo_lib::wallet::signing::ErgoTransaction;
 use ergo_lib::wallet::{box_selector::BoxSelection, tx_builder::TxBuilder};
 use serde::{Deserialize, Serialize};
 
@@ -70,7 +70,13 @@ pub fn mint_reserve_transaction(
     .build()?;
 
     Ok(ReserveResponse {
-        reserve_box: unsigned_transaction.outputs().first().try_into().unwrap(),
+        // Unwrap is safe here since transaction layout is fixed (reserve box at output #0)
+        reserve_box: unsigned_transaction
+            .outputs()
+            .first()
+            .unwrap()
+            .try_into()
+            .unwrap(),
         transaction: unsigned_transaction,
     })
 }
@@ -112,7 +118,7 @@ pub fn top_up_reserve_transaction(
     context_extension.values.insert(0u8, 10i8.into());
     tx_builder.set_context_extension(reserve.box_id(), context_extension);
     let transaction = tx_builder.build()?;
-    let reserve_box = ReserveBoxSpec::try_from(transaction.outputs().first()).unwrap();
+    let reserve_box = ReserveBoxSpec::try_from(transaction.outputs().first().unwrap()).unwrap();
     Ok(ReserveResponse {
         reserve_box,
         transaction,

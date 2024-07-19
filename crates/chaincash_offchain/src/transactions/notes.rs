@@ -6,6 +6,7 @@ use ergo_avltree_rust::authenticated_tree_ops::AuthenticatedTreeOps;
 use ergo_avltree_rust::batch_avl_prover::BatchAVLProver;
 use ergo_avltree_rust::batch_node::{AVLTree, Node, NodeHeader};
 use ergo_lib::chain::ergo_box::box_builder::ErgoBoxCandidateBuilder;
+use ergo_lib::chain::transaction::ergo_transaction::ErgoTransaction;
 use ergo_lib::chain::transaction::unsigned::UnsignedTransaction;
 use ergo_lib::chain::transaction::{DataInput, Transaction};
 use ergo_lib::ergo_chain_types::{ADDigest, EcPoint};
@@ -18,7 +19,6 @@ use ergo_lib::ergotree_ir::chain::{ergo_box::ErgoBox, token::Token};
 use ergo_lib::ergotree_ir::ergo_tree::ErgoTree;
 use ergo_lib::ergotree_ir::mir::avl_tree_data::{AvlTreeData, AvlTreeFlags};
 use ergo_lib::wallet::box_selector::{BoxSelection, BoxSelector, SimpleBoxSelector};
-use ergo_lib::wallet::signing::ErgoTransaction;
 use ergo_lib::wallet::tx_builder::TxBuilder;
 use serde::{Deserialize, Serialize};
 
@@ -96,7 +96,7 @@ pub fn mint_note_transaction(
     )
     .build()?;
     let note = Note::new(
-        unsigned_transaction.outputs().first().clone(),
+        unsigned_transaction.outputs().first().unwrap().clone(),
         NoteHistory::new(),
     )
     .unwrap();
