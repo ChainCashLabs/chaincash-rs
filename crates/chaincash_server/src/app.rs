@@ -1,7 +1,7 @@
 //! ChainCash payment server creation and serving.
 use axum::{routing::get, Router};
 use chaincash_predicate::predicates::Predicate;
-use chaincash_services::transaction::TransactionService;
+use chaincash_services::{compiler::Compiler, transaction::TransactionService};
 use chaincash_store::ChainCashStore;
 use ergo_client::node::NodeClient;
 use tracing::info;
@@ -12,12 +12,21 @@ use crate::api;
 pub struct ServerState {
     pub store: ChainCashStore,
     pub node: NodeClient,
+    compiler: Compiler,
     pub predicates: Vec<Predicate>,
 }
 
 impl ServerState {
+    pub fn new(node: NodeClient, store: ChainCashStore, predicates: Vec<Predicate>) -> Self {
+        ServerState {
+            compiler: Compiler::new(node.clone()),
+            node,
+            store,
+            predicates,
+        }
+    }
     pub fn tx_service(&self) -> TransactionService {
-        TransactionService::new(&self.node, &self.store)
+        TransactionService::new(&self.node, &self.store, &self.compiler)
     }
 }
 
@@ -59,11 +68,7 @@ impl ServerState {
         )
         .unwrap();
 
-        ServerState {
-            store: ChainCashStore::open_in_memory().unwrap(),
-            node,
-            predicates: vec![],
-        }
+        ServerState::new(node, ChainCashStore::open_in_memory().unwrap(), vec![])
     }
 }
 

@@ -84,12 +84,7 @@ impl ChainCashApp {
 
         let node = node_from_config(&self.config.node)?;
 
-        let state = ServerState {
-            store,
-            node,
-            predicates,
-        };
-
+        let state = ServerState::new(node, store, predicates);
         Ok(Server::serve(listener, state).await?)
     }
 }
