@@ -6,6 +6,7 @@ license.workspace = true
 
 [dependencies]
 chaincash_server = { path = "../chaincash_server" }
+chaincash_services = { path = "../chaincash_services" }
 chaincash_offchain = { path = "../chaincash_offchain" }
 chaincash_store = { path = "../chaincash_store" }
 chaincash_predicate = { path = "../chaincash_predicate" }

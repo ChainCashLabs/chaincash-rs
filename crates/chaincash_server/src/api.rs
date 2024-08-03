@@ -1,6 +1,9 @@
+use std::sync::Arc;
+
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::{Json, Router};
+use chaincash_services::ServerState;
 use serde_json::json;
 use thiserror::Error;
 
@@ -44,7 +47,7 @@ impl IntoResponse for ApiError {
     }
 }
 
-pub fn router() -> Router<crate::ServerState> {
+pub fn router() -> Router<Arc<ServerState>> {
     let router_v1 = Router::new()
         .nest("/reserves", crate::reserves::router())
         .nest("/notes", crate::notes::router())

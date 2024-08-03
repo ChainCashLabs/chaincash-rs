@@ -1,15 +1,18 @@
+use std::sync::Arc;
+
 use axum::extract::State;
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
 use axum::{Json, Router};
 use chaincash_offchain::transactions::reserves::{MintReserveRequest, SignedReserveResponse};
 use chaincash_services::transaction::TopUpReserveRequest;
+use chaincash_services::ServerState;
 use serde_json::json;
 
 use crate::api::ApiError;
 
 async fn mint_reserve(
-    State(state): State<crate::ServerState>,
+    State(state): State<Arc<ServerState>>,
     Json(body): Json<MintReserveRequest>,
 ) -> Result<Response, ApiError> {
     let SignedReserveResponse {
@@ -25,7 +28,7 @@ async fn mint_reserve(
 }
 
 async fn top_up_reserve(
-    State(state): State<crate::ServerState>,
+    State(state): State<Arc<ServerState>>,
     Json(body): Json<TopUpReserveRequest>,
 ) -> Result<Response, ApiError> {
     let SignedReserveResponse {
@@ -38,11 +41,11 @@ async fn top_up_reserve(
     Ok(response.into_response())
 }
 
-async fn list_reserves(State(state): State<crate::ServerState>) -> Result<Response, ApiError> {
+async fn list_reserves(State(state): State<Arc<ServerState>>) -> Result<Response, ApiError> {
     Ok(Json(state.store.reserves().reserve_boxes()?).into_response())
 }
 
-pub fn router() -> Router<crate::ServerState> {
+pub fn router() -> Router<Arc<ServerState>> {
     Router::new()
         .route("/mint", post(mint_reserve))
         .route("/topup", post(top_up_reserve))

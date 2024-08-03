@@ -27,7 +27,7 @@ pub mod error;
 pub(crate) mod notes;
 pub(crate) mod reserves;
 
-pub use app::{Server, ServerState};
+pub use app::Server;
 pub use error::Error;
 
 #[derive(serde::Deserialize, Debug)]

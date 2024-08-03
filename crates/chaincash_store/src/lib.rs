@@ -2,6 +2,7 @@ pub mod ergo_boxes;
 pub mod error;
 pub mod notes;
 pub mod reserves;
+pub mod scans;
 pub mod schema;
 
 use diesel::connection::SimpleConnection;
@@ -12,6 +13,7 @@ use ergo_boxes::ErgoBoxRepository;
 pub use error::Error;
 use notes::NoteRepository;
 use reserves::ReserveRepository;
+use scans::ScanRepository;
 use std::borrow::BorrowMut;
 
 #[derive(serde::Deserialize, Debug)]
@@ -69,6 +71,10 @@ impl ChainCashStore {
 
     pub fn ergo_boxes(&self) -> ErgoBoxRepository {
         ErgoBoxRepository::new(self.pool.clone())
+    }
+
+    pub fn scans(&self) -> ScanRepository {
+        ScanRepository::new(self.pool.clone())
     }
 }
 
