@@ -27,6 +27,7 @@ impl<'a> Scan<'a> {
     }
 }
 
+#[derive(Clone, Copy, Debug)]
 pub enum ScanType {
     Reserves,
     Receipts,
@@ -34,7 +35,7 @@ pub enum ScanType {
 }
 
 impl ScanType {
-    fn to_str(&self) -> &'static str {
+    pub fn to_str(&self) -> &'static str {
         match self {
             Self::Reserves => "reserve",
             Self::Receipts => "receipt",

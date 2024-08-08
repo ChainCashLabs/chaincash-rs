@@ -10,12 +10,15 @@ use ergo_lib::{
     ergo_chain_types::{
         blake2b256_hash,
         ec_point::{exponentiate, generator},
-        Digest, EcPoint,
+        Base16DecodedBytes, Digest, EcPoint,
     },
-    ergotree_interpreter::sigma_protocol::wscalar::Wscalar,
+    ergotree_interpreter::sigma_protocol::{prover::ContextExtension, wscalar::Wscalar},
     ergotree_ir::{
         chain::token::TokenId,
-        mir::avl_tree_data::{AvlTreeData, AvlTreeFlags},
+        mir::{
+            avl_tree_data::{AvlTreeData, AvlTreeFlags},
+            constant::TryExtractInto,
+        },
         serialization::{sigma_byte_writer::SigmaByteWriter, SigmaSerializable},
     },
 };
@@ -29,6 +32,8 @@ use thiserror::Error;
 pub enum NoteHistoryError {
     #[error("Attempted to insert duplicate reserve key for note")]
     DuplicateReserveKey,
+    #[error("Couldn't restore ownership entry from ContextExtension")]
+    InvalidContextExtension,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -101,7 +106,6 @@ impl TryFrom<&[u8]> for Signature {
 #[cfg_attr(test, derive(proptest_derive::Arbitrary))]
 #[derive(Debug, Clone)]
 pub struct OwnershipEntry {
-    pub position: u64,
     #[cfg_attr(
         test,
         proptest(
@@ -111,6 +115,37 @@ pub struct OwnershipEntry {
     pub reserve_id: TokenId,
     pub amount: u64,
     pub signature: Signature,
+}
+
+impl OwnershipEntry {
+    pub fn from_context_extension(
+        note_amount: u64,
+        reserve_id: TokenId,
+        context_extension: &ContextExtension,
+    ) -> Result<Self, NoteHistoryError> {
+        let a = context_extension
+            .values
+            .get(&1)
+            .cloned()
+            .ok_or(NoteHistoryError::InvalidContextExtension)?
+            .try_extract_into::<EcPoint>()
+            .map_err(|_| NoteHistoryError::InvalidContextExtension)?;
+        let z = Wscalar::try_from(Base16DecodedBytes(
+            context_extension
+                .values
+                .get(&2)
+                .cloned()
+                .ok_or(NoteHistoryError::InvalidContextExtension)?
+                .try_extract_into::<Vec<u8>>()
+                .map_err(|_| NoteHistoryError::InvalidContextExtension)?,
+        ))
+        .map_err(|_| NoteHistoryError::InvalidContextExtension)?;
+        Ok(OwnershipEntry {
+            reserve_id,
+            amount: note_amount,
+            signature: Signature { a, z },
+        })
+    }
 }
 
 #[derive(Clone)]

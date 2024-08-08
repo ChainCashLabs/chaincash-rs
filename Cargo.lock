@@ -1080,7 +1080,7 @@ dependencies = [
 [[package]]
 name = "ergo_client"
 version = "0.1.0"
-source = "git+https://github.com/SethDusek/ergo_client.git#d39707587c37f59c8da0f508a236b8e68962eda2"
+source = "git+https://github.com/SethDusek/ergo_client.git#4caea3c178c4b67f7e921a2c7ddd8ad8f19eb865"
 dependencies = [
  "anyhow",
  "ergo-lib",

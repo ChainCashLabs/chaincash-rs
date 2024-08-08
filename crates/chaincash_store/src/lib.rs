@@ -43,7 +43,7 @@ impl ChainCashStore {
             <ConnectionManager<ConnectionType> as ManageConnection>::Error;
         impl CustomizeConnection<ConnectionType, ConnectionManagerError> for CustomizedConnection {
             fn on_acquire(&self, conn: &mut ConnectionType) -> Result<(), ConnectionManagerError> {
-                conn.batch_execute("PRAGMA foreign_keys=ON;")
+                conn.batch_execute("PRAGMA foreign_keys=ON; PRAGMA busy_timeout = 1000;")
                     .map_err(|e| ConnectionManagerError::QueryError(e))?;
                 Ok(())
             }

@@ -17,7 +17,7 @@ target/
 # database
 state.mdb
 *.sqlite
-
+*.sqlite-journal
 # local app configuration
 config/local*
 
