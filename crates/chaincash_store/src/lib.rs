@@ -2,6 +2,7 @@ pub mod ergo_boxes;
 pub mod error;
 pub mod notes;
 pub mod reserves;
+pub mod scans;
 pub mod schema;
 
 use diesel::connection::SimpleConnection;
@@ -12,6 +13,7 @@ use ergo_boxes::ErgoBoxRepository;
 pub use error::Error;
 use notes::NoteRepository;
 use reserves::ReserveRepository;
+use scans::ScanRepository;
 use std::borrow::BorrowMut;
 
 #[derive(serde::Deserialize, Debug)]
@@ -41,7 +43,7 @@ impl ChainCashStore {
             <ConnectionManager<ConnectionType> as ManageConnection>::Error;
         impl CustomizeConnection<ConnectionType, ConnectionManagerError> for CustomizedConnection {
             fn on_acquire(&self, conn: &mut ConnectionType) -> Result<(), ConnectionManagerError> {
-                conn.batch_execute("PRAGMA foreign_keys=ON;")
+                conn.batch_execute("PRAGMA foreign_keys=ON; PRAGMA busy_timeout = 1000;")
                     .map_err(|e| ConnectionManagerError::QueryError(e))?;
                 Ok(())
             }
@@ -69,6 +71,10 @@ impl ChainCashStore {
 
     pub fn ergo_boxes(&self) -> ErgoBoxRepository {
         ErgoBoxRepository::new(self.pool.clone())
+    }
+
+    pub fn scans(&self) -> ScanRepository {
+        ScanRepository::new(self.pool.clone())
     }
 }
 

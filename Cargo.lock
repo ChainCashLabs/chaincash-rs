@@ -393,6 +393,7 @@ dependencies = [
  "chaincash_offchain",
  "chaincash_predicate",
  "chaincash_server",
+ "chaincash_services",
  "chaincash_store",
  "config",
  "ergo_client",
@@ -471,11 +472,14 @@ version = "0.1.0"
 dependencies = [
  "bs58 0.5.1",
  "chaincash_offchain",
+ "chaincash_predicate",
  "chaincash_store",
  "ergo-lib",
  "ergo_client",
  "serde",
  "thiserror",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]
@@ -964,7 +968,7 @@ checksum = "5443807d6dff69373d433ab9ef5378ad8df50ca6298caf15de6e52e24aaf54d5"
 [[package]]
 name = "ergo-chain-types"
 version = "0.14.1"
-source = "git+https://github.com/ergoplatform/sigma-rust.git?branch=develop#f0b413609b7d0490b58f9e24c9d362b3c9e618ee"
+source = "git+https://github.com/ergoplatform/sigma-rust.git?branch=develop#08a9c969dbed6c7b1c57a2ccc04ff5db60c6cc60"
 dependencies = [
  "base16",
  "base64 0.13.1",
@@ -988,7 +992,7 @@ dependencies = [
 [[package]]
 name = "ergo-lib"
 version = "0.27.1"
-source = "git+https://github.com/ergoplatform/sigma-rust.git?branch=develop#f0b413609b7d0490b58f9e24c9d362b3c9e618ee"
+source = "git+https://github.com/ergoplatform/sigma-rust.git?branch=develop#08a9c969dbed6c7b1c57a2ccc04ff5db60c6cc60"
 dependencies = [
  "base16",
  "bounded-vec",
@@ -1022,7 +1026,7 @@ dependencies = [
 [[package]]
 name = "ergo-merkle-tree"
 version = "0.14.1"
-source = "git+https://github.com/ergoplatform/sigma-rust.git?branch=develop#f0b413609b7d0490b58f9e24c9d362b3c9e618ee"
+source = "git+https://github.com/ergoplatform/sigma-rust.git?branch=develop#08a9c969dbed6c7b1c57a2ccc04ff5db60c6cc60"
 dependencies = [
  "base16",
  "blake2 0.10.6",
@@ -1039,7 +1043,7 @@ dependencies = [
 [[package]]
 name = "ergo-nipopow"
 version = "0.14.1"
-source = "git+https://github.com/ergoplatform/sigma-rust.git?branch=develop#f0b413609b7d0490b58f9e24c9d362b3c9e618ee"
+source = "git+https://github.com/ergoplatform/sigma-rust.git?branch=develop#08a9c969dbed6c7b1c57a2ccc04ff5db60c6cc60"
 dependencies = [
  "base16",
  "bounded-integer",
@@ -1076,7 +1080,7 @@ dependencies = [
 [[package]]
 name = "ergo_client"
 version = "0.1.0"
-source = "git+https://github.com/SethDusek/ergo_client.git#04af75ac63c5d66a2bb6639a385eec30d297ff55"
+source = "git+https://github.com/SethDusek/ergo_client.git#4caea3c178c4b67f7e921a2c7ddd8ad8f19eb865"
 dependencies = [
  "anyhow",
  "ergo-lib",
@@ -1092,7 +1096,7 @@ dependencies = [
 [[package]]
 name = "ergoscript-compiler"
 version = "0.23.1"
-source = "git+https://github.com/ergoplatform/sigma-rust.git?branch=develop#f0b413609b7d0490b58f9e24c9d362b3c9e618ee"
+source = "git+https://github.com/ergoplatform/sigma-rust.git?branch=develop#08a9c969dbed6c7b1c57a2ccc04ff5db60c6cc60"
 dependencies = [
  "derive_more",
  "drop_bomb",
@@ -1108,7 +1112,7 @@ dependencies = [
 [[package]]
 name = "ergotree-interpreter"
 version = "0.27.1"
-source = "git+https://github.com/ergoplatform/sigma-rust.git?branch=develop#f0b413609b7d0490b58f9e24c9d362b3c9e618ee"
+source = "git+https://github.com/ergoplatform/sigma-rust.git?branch=develop#08a9c969dbed6c7b1c57a2ccc04ff5db60c6cc60"
 dependencies = [
  "base16",
  "blake2 0.10.6",
@@ -1141,7 +1145,7 @@ dependencies = [
 [[package]]
 name = "ergotree-ir"
 version = "0.27.1"
-source = "git+https://github.com/ergoplatform/sigma-rust.git?branch=develop#f0b413609b7d0490b58f9e24c9d362b3c9e618ee"
+source = "git+https://github.com/ergoplatform/sigma-rust.git?branch=develop#08a9c969dbed6c7b1c57a2ccc04ff5db60c6cc60"
 dependencies = [
  "base16",
  "bounded-vec",
@@ -1316,7 +1320,7 @@ dependencies = [
 [[package]]
 name = "gf2_192"
 version = "0.27.1"
-source = "git+https://github.com/ergoplatform/sigma-rust.git?branch=develop#f0b413609b7d0490b58f9e24c9d362b3c9e618ee"
+source = "git+https://github.com/ergoplatform/sigma-rust.git?branch=develop#08a9c969dbed6c7b1c57a2ccc04ff5db60c6cc60"
 dependencies = [
  "derive_more",
  "proptest",
@@ -2921,7 +2925,7 @@ dependencies = [
 [[package]]
 name = "sigma-ser"
 version = "0.15.0"
-source = "git+https://github.com/ergoplatform/sigma-rust.git?branch=develop#f0b413609b7d0490b58f9e24c9d362b3c9e618ee"
+source = "git+https://github.com/ergoplatform/sigma-rust.git?branch=develop#08a9c969dbed6c7b1c57a2ccc04ff5db60c6cc60"
 dependencies = [
  "bitvec",
  "bounded-vec",
@@ -2931,7 +2935,7 @@ dependencies = [
 [[package]]
 name = "sigma-util"
 version = "0.14.0"
-source = "git+https://github.com/ergoplatform/sigma-rust.git?branch=develop#f0b413609b7d0490b58f9e24c9d362b3c9e618ee"
+source = "git+https://github.com/ergoplatform/sigma-rust.git?branch=develop#08a9c969dbed6c7b1c57a2ccc04ff5db60c6cc60"
 dependencies = [
  "blake2 0.10.6",
  "sha2 0.10.8",

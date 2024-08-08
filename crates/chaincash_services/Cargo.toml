@@ -11,4 +11,7 @@ ergo_lib = { workspace = true }
 ergo_client = { workspace = true }
 chaincash_store = { path = "../chaincash_store" }
 chaincash_offchain = { path = "../chaincash_offchain" }
+chaincash_predicate = { path = "../chaincash_predicate" }
 thiserror = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }

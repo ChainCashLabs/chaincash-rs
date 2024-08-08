@@ -1,6 +1,9 @@
+use std::sync::Arc;
+
 use chaincash_offchain::node::node_from_config;
 use chaincash_predicate::predicates::Predicate;
-use chaincash_server::{Server, ServerState};
+use chaincash_server::Server;
+use chaincash_services::{scanner::start_scanner, ServerState};
 use chaincash_store::{ChainCashStore, Update};
 use config::{Environment, File};
 use thiserror::Error;
@@ -84,12 +87,8 @@ impl ChainCashApp {
 
         let node = node_from_config(&self.config.node)?;
 
-        let state = ServerState {
-            store,
-            node,
-            predicates,
-        };
-
+        let state = Arc::new(ServerState::new(node, store, predicates));
+        start_scanner(state.clone()).await.unwrap();
         Ok(Server::serve(listener, state).await?)
     }
 }

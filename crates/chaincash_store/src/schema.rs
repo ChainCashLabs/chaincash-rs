@@ -49,6 +49,14 @@ diesel::table! {
     }
 }
 
+diesel::table! {
+    scans (scan_id) {
+        scan_id -> Integer,
+        scan_type -> Text,
+        scan_name -> Text,
+    }
+}
+
 diesel::joinable!(notes -> denominations (denomination_id));
 diesel::joinable!(notes -> ergo_boxes (box_id));
 diesel::joinable!(ownership_entries -> notes (note_id));
@@ -61,4 +69,5 @@ diesel::allow_tables_to_appear_in_same_query!(
     notes,
     ownership_entries,
     reserves,
+    scans,
 );

@@ -69,7 +69,7 @@ impl ReserveRepository {
     pub fn get_reserve_by_identifier(&self, identifier: &TokenId) -> Result<ReserveBoxSpec, Error> {
         let mut conn = self.pool.get()?;
         let ergo_box = schema::reserves::table
-            .filter(schema::reserves::identifier.eq(String::from(identifier.clone())))
+            .filter(schema::reserves::identifier.eq(String::from(*identifier)))
             .inner_join(schema::ergo_boxes::table)
             .select(ErgoBox::as_select())
             .first(&mut conn)?;

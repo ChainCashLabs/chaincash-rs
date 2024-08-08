@@ -1,4 +1,3 @@
-use chaincash_offchain::contracts::{NOTE_CONTRACT, RECEIPT_CONTRACT, RESERVE_CONTRACT};
 use chaincash_offchain::transactions::notes::{
     mint_note_transaction, spend_note_transaction, MintNoteRequest, MintNoteResponse,
     SignedMintNoteResponse, SignedSpendNoteResponse, SpendNoteResponse,
@@ -10,17 +9,18 @@ use chaincash_offchain::transactions::reserves::{
 use chaincash_offchain::transactions::{TransactionError, TxContext};
 use chaincash_store::ChainCashStore;
 use ergo_client::node::NodeClient;
-use ergo_lib::ergo_chain_types::{blake2b256_hash, EcPoint};
+use ergo_lib::ergo_chain_types::EcPoint;
 use ergo_lib::ergotree_ir::chain::ergo_box::box_value::BoxValue;
 use ergo_lib::ergotree_ir::chain::ergo_box::{box_value::BoxValueError, ErgoBox};
 use ergo_lib::ergotree_ir::chain::token::{TokenAmount, TokenId};
-use ergo_lib::ergotree_ir::serialization::SigmaSerializable;
 use ergo_lib::wallet::box_selector::{
     BoxSelection, BoxSelector, BoxSelectorError, SimpleBoxSelector,
 };
 use ergo_lib::wallet::tx_builder::SUGGESTED_TX_FEE;
 use serde::Deserialize;
 use thiserror::Error;
+
+use crate::compiler::Compiler;
 
 #[derive(Debug, Error)]
 pub enum TransactionServiceError {
@@ -65,12 +65,17 @@ pub struct TopUpReserveRequest {
 #[derive(Clone)]
 pub struct TransactionService<'a> {
     node: &'a NodeClient,
+    compiler: &'a Compiler,
     store: &'a ChainCashStore,
 }
 
 impl<'a> TransactionService<'a> {
-    pub fn new(node: &'a NodeClient, store: &'a ChainCashStore) -> Self {
-        Self { node, store }
+    pub fn new(node: &'a NodeClient, store: &'a ChainCashStore, compiler: &'a Compiler) -> Self {
+        Self {
+            node,
+            store,
+            compiler,
+        }
     }
 
     async fn box_selection_with_amount(
@@ -116,11 +121,7 @@ impl<'a> TransactionService<'a> {
         let selected_inputs = self
             .box_selection_with_amount(request.amount + ctx.fee)
             .await?;
-        let reserve_tree = self
-            .node
-            .extensions()
-            .compile_contract(RESERVE_CONTRACT)
-            .await?;
+        let reserve_tree = self.compiler.reserve_contract().await?.clone();
         let ReserveResponse {
             reserve_box,
             transaction,
@@ -159,37 +160,13 @@ impl<'a> TransactionService<'a> {
         &self,
         request: MintNoteRequest,
     ) -> Result<SignedMintNoteResponse, TransactionServiceError> {
-        let reserve_tree_bytes = self
-            .node
-            .extensions()
-            .compile_contract(RESERVE_CONTRACT)
-            .await?
-            .sigma_serialize_bytes()
-            .unwrap();
-        let reserve_hash = bs58::encode(blake2b256_hash(&reserve_tree_bytes[1..])).into_string();
-        let receipt_contract = RECEIPT_CONTRACT.replace("$reserveContractHash", &reserve_hash);
-        let receipt_tree_bytes = self
-            .node
-            .extensions()
-            .compile_contract(&receipt_contract)
-            .await?
-            .sigma_serialize_bytes()
-            .unwrap();
-        let receipt_hash = bs58::encode(blake2b256_hash(&receipt_tree_bytes[1..])).into_string();
         let ctx = self.get_tx_ctx().await?;
         let selected_inputs = self
             .box_selection_with_amount(BoxValue::SAFE_USER_MIN.as_u64() + ctx.fee)
             .await?;
-        let note_contract = NOTE_CONTRACT
-            .replace("$reserveContractHash", &reserve_hash)
-            .replace("$receiptContractHash", &receipt_hash);
-        let contract_tree = self
-            .node
-            .extensions()
-            .compile_contract(&note_contract)
-            .await?;
+        let note_tree = self.compiler.note_contract().await?.clone();
         let MintNoteResponse { note, transaction } =
-            mint_note_transaction(request, contract_tree, selected_inputs, ctx)?;
+            mint_note_transaction(request, note_tree, selected_inputs, ctx)?;
         let submitted_tx = self.node.extensions().sign_and_submit(transaction).await?;
         self.store.notes().add_note(&note)?;
         Ok(SignedMintNoteResponse {
