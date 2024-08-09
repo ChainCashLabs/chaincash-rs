@@ -967,8 +967,9 @@ checksum = "5443807d6dff69373d433ab9ef5378ad8df50ca6298caf15de6e52e24aaf54d5"
 
 [[package]]
 name = "ergo-chain-types"
-version = "0.14.1"
-source = "git+https://github.com/ergoplatform/sigma-rust.git?branch=develop#08a9c969dbed6c7b1c57a2ccc04ff5db60c6cc60"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "191efddb0ecef708ca9a01faeec4e7dbc24c96eb49d92910f2816f7dda32a67c"
 dependencies = [
  "base16",
  "base64 0.13.1",
@@ -983,7 +984,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_with",
- "sigma-ser 0.15.0",
+ "sigma-ser 0.19.0",
  "sigma-util",
  "thiserror",
  "url",
@@ -991,8 +992,9 @@ dependencies = [
 
 [[package]]
 name = "ergo-lib"
-version = "0.27.1"
-source = "git+https://github.com/ergoplatform/sigma-rust.git?branch=develop#08a9c969dbed6c7b1c57a2ccc04ff5db60c6cc60"
+version = "0.28.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fa60ec532b13afe35f00f70640bbef05a9ebec8ef34d396c0beb787aa008bdaf"
 dependencies = [
  "base16",
  "bounded-vec",
@@ -1017,7 +1019,7 @@ dependencies = [
  "serde_json",
  "serde_with",
  "sha2 0.10.8",
- "sigma-ser 0.15.0",
+ "sigma-ser 0.19.0",
  "sigma-util",
  "thiserror",
  "unicode-normalization",
@@ -1025,8 +1027,9 @@ dependencies = [
 
 [[package]]
 name = "ergo-merkle-tree"
-version = "0.14.1"
-source = "git+https://github.com/ergoplatform/sigma-rust.git?branch=develop#08a9c969dbed6c7b1c57a2ccc04ff5db60c6cc60"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7d58c362b2cef0bacd3b3f0df319f526bb7804e2a6867c00e27832404a5c73d6"
 dependencies = [
  "base16",
  "blake2 0.10.6",
@@ -1035,15 +1038,16 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_repr",
- "sigma-ser 0.15.0",
+ "sigma-ser 0.19.0",
  "sigma-util",
  "thiserror",
 ]
 
 [[package]]
 name = "ergo-nipopow"
-version = "0.14.1"
-source = "git+https://github.com/ergoplatform/sigma-rust.git?branch=develop#08a9c969dbed6c7b1c57a2ccc04ff5db60c6cc60"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "72eaf2e965e58116fba934073a29862fb9981515f696826caf8021f39cc1a20b"
 dependencies = [
  "base16",
  "bounded-integer",
@@ -1056,7 +1060,7 @@ dependencies = [
  "num-traits",
  "serde",
  "serde_json",
- "sigma-ser 0.15.0",
+ "sigma-ser 0.19.0",
  "sigma-util",
  "thiserror",
 ]
@@ -1080,7 +1084,7 @@ dependencies = [
 [[package]]
 name = "ergo_client"
 version = "0.1.0"
-source = "git+https://github.com/SethDusek/ergo_client.git#4caea3c178c4b67f7e921a2c7ddd8ad8f19eb865"
+source = "git+https://github.com/SethDusek/ergo_client.git#b1b5382a8b889c50f8d3b3ea5fd23da4bc04656d"
 dependencies = [
  "anyhow",
  "ergo-lib",
@@ -1095,8 +1099,9 @@ dependencies = [
 
 [[package]]
 name = "ergoscript-compiler"
-version = "0.23.1"
-source = "git+https://github.com/ergoplatform/sigma-rust.git?branch=develop#08a9c969dbed6c7b1c57a2ccc04ff5db60c6cc60"
+version = "0.24.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6b668f30ad47222a40952a20d130bc271c82ac5d8f7a814ca6d00c23ba2ac6e4"
 dependencies = [
  "derive_more",
  "drop_bomb",
@@ -1111,8 +1116,9 @@ dependencies = [
 
 [[package]]
 name = "ergotree-interpreter"
-version = "0.27.1"
-source = "git+https://github.com/ergoplatform/sigma-rust.git?branch=develop#08a9c969dbed6c7b1c57a2ccc04ff5db60c6cc60"
+version = "0.28.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d682f96ebe18e3385e64b1c0c80f074047f538b78644cd5765410b97b75ae337"
 dependencies = [
  "base16",
  "blake2 0.10.6",
@@ -1137,15 +1143,16 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_with",
- "sigma-ser 0.15.0",
+ "sigma-ser 0.19.0",
  "sigma-util",
  "thiserror",
 ]
 
 [[package]]
 name = "ergotree-ir"
-version = "0.27.1"
-source = "git+https://github.com/ergoplatform/sigma-rust.git?branch=develop#08a9c969dbed6c7b1c57a2ccc04ff5db60c6cc60"
+version = "0.28.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d17f43b9f89f242a2c83ec72c71091b94e77c476deb80aebf0b174ecee4e8d3f"
 dependencies = [
  "base16",
  "bounded-vec",
@@ -1168,7 +1175,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_with",
- "sigma-ser 0.15.0",
+ "sigma-ser 0.19.0",
  "sigma-util",
  "strum",
  "strum_macros",
@@ -1319,8 +1326,9 @@ dependencies = [
 
 [[package]]
 name = "gf2_192"
-version = "0.27.1"
-source = "git+https://github.com/ergoplatform/sigma-rust.git?branch=develop#08a9c969dbed6c7b1c57a2ccc04ff5db60c6cc60"
+version = "0.28.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "777e981195aca8a5251c1801fa2f32f1dc0dc63cba8953722ede90a5a3b5517e"
 dependencies = [
  "derive_more",
  "proptest",
@@ -2924,8 +2932,9 @@ dependencies = [
 
 [[package]]
 name = "sigma-ser"
-version = "0.15.0"
-source = "git+https://github.com/ergoplatform/sigma-rust.git?branch=develop#08a9c969dbed6c7b1c57a2ccc04ff5db60c6cc60"
+version = "0.19.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6f6e53a32df0783ac1ed519a249b7e1649f6ad2001d2acd5ffd2a4b4d8f59c1d"
 dependencies = [
  "bitvec",
  "bounded-vec",
@@ -2934,8 +2943,9 @@ dependencies = [
 
 [[package]]
 name = "sigma-util"
-version = "0.14.0"
-source = "git+https://github.com/ergoplatform/sigma-rust.git?branch=develop#08a9c969dbed6c7b1c57a2ccc04ff5db60c6cc60"
+version = "0.18.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e811ad1851f7bec22939cac5ad738f7073b78496183ddf5d9092d82419db018f"
 dependencies = [
  "blake2 0.10.6",
  "sha2 0.10.8",
