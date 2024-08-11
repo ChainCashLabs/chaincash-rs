@@ -3,10 +3,11 @@ use std::borrow::BorrowMut;
 use chaincash_offchain::note_history::NoteHistory;
 use diesel::{
     associations::{Associations, GroupedBy, Identifiable},
+    delete,
     deserialize::Queryable,
     prelude::Insertable,
-    BelongingToDsl, Connection, ExpressionMethods, QueryDsl, RunQueryDsl, Selectable,
-    SelectableHelper,
+    BelongingToDsl, Connection, ExpressionMethods, OptionalExtension, QueryDsl, RunQueryDsl,
+    Selectable, SelectableHelper,
 };
 use ergo_lib::ergotree_ir::chain::{self, ergo_box::BoxId, token::TokenId};
 use serde::Serialize;
@@ -45,6 +46,7 @@ struct NewNote<'a> {
 pub struct OwnershipEntry {
     #[serde(skip)]
     id: i32,
+    #[serde(skip)]
     note_id: i32,
     amount: i64,
     position: i64,
@@ -62,7 +64,6 @@ impl TryInto<chaincash_offchain::note_history::OwnershipEntry> for OwnershipEntr
         let reserve_id = TokenId::from(BoxId::try_from(self.reserve_nft_id)?);
 
         Ok(chaincash_offchain::note_history::OwnershipEntry {
-            position: self.position as u64,
             reserve_id,
             amount: self.amount as u64,
             signature,
@@ -107,10 +108,11 @@ impl NoteRepository {
         let ownership_entries: Vec<NewOwnershipEntry> = note_history
             .ownership_entries()
             .iter()
-            .map(|ownership_entry| NewOwnershipEntry {
+            .enumerate()
+            .map(|(i, ownership_entry)| NewOwnershipEntry {
                 note_id: note.id,
                 amount: ownership_entry.amount as i64,
-                position: ownership_entry.position as i64,
+                position: i as i64,
                 reserve_nft_id: ownership_entry.reserve_id.into(),
                 signature: ownership_entry.signature.serialize(),
             })
@@ -150,6 +152,22 @@ impl NoteRepository {
 
         Ok(chaincash_offchain::boxes::Note::new(ergo_box, note_history)
             .expect("Failed to parse note from DB"))
+    }
+
+    pub fn get_by_box_id(
+        &self,
+        box_id: &BoxId,
+    ) -> Result<Option<(i32, chaincash_offchain::boxes::Note)>, Error> {
+        let mut conn = self.pool.get()?;
+        let note_id = schema::ergo_boxes::table
+            .inner_join(schema::notes::table)
+            .filter(schema::ergo_boxes::ergo_id.eq(&box_id.to_string()))
+            .select(schema::notes::id)
+            .first::<i32>(&mut conn)
+            .optional()?;
+        note_id
+            .map(|id| Ok((id, self.get_note_box(id)?)))
+            .transpose()
     }
 
     pub fn notes(&self) -> Result<Vec<NoteWithHistory>, Error> {
@@ -201,5 +219,20 @@ impl NoteRepository {
             .filter(schema::ergo_boxes::id.eq(box_id))
             .execute(conn.borrow_mut())?;
         Ok(())
+    }
+
+    /// Delete boxes that are not in latest scan (spent)
+    pub fn delete_not_in(&self, ids: impl Iterator<Item = BoxId>) -> Result<Vec<String>, Error> {
+        let mut conn = self.pool.get()?;
+        let ids = ids.map(|id| id.to_string());
+        let spent_boxes = schema::notes::table
+            .inner_join(schema::ergo_boxes::table)
+            .filter(diesel::dsl::not(schema::ergo_boxes::ergo_id.eq_any(ids)))
+            .select(schema::ergo_boxes::id)
+            .into_boxed();
+        let query = delete(schema::ergo_boxes::table)
+            .filter(schema::ergo_boxes::id.eq_any(spent_boxes))
+            .returning(schema::ergo_boxes::ergo_id);
+        query.load(&mut conn).map_err(Into::into)
     }
 }

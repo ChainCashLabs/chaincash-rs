@@ -6,7 +6,7 @@ license.workspace = true
 
 [dependencies]
 once_cell = "1.18.0"
-ergo_lib = { workspace = true }
+ergo-lib = { workspace = true }
 ergo_client = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -18,9 +18,6 @@ k256 = "0.13.3"
 rand = { version = "0.8.5", features = ["std", "std_rng"] }
 
 [dev-dependencies]
-ergo_lib = { git = "https://github.com/ergoplatform/sigma-rust.git", branch = "master", package = "ergo-lib", features = [
-    "compiler",
-    "arbitrary",
-] }
+ergo-lib = { workspace = true, features = ["compiler", "arbitrary"] }
 proptest = "1.0"
 proptest-derive = "0.3"

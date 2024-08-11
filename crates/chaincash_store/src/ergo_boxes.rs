@@ -69,6 +69,15 @@ impl ErgoBoxRepository {
             .get_result(conn)?)
     }
 
+    pub fn get_by_id(&self, box_id: BoxId) -> Result<Option<ErgoBox>, Error> {
+        let mut conn = self.pool.get()?;
+        Ok(schema::ergo_boxes::table
+            .filter(schema::ergo_boxes::ergo_id.eq(box_id.to_string()))
+            .select(ErgoBox::as_select())
+            .first(&mut conn)
+            .optional()?)
+    }
+
     #[allow(dead_code)]
     pub(crate) fn delete_with_conn(conn: &mut ConnectionType, box_id: BoxId) -> Result<(), Error> {
         diesel::delete(schema::ergo_boxes::table)

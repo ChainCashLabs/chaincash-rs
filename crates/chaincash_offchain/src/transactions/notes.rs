@@ -6,6 +6,7 @@ use ergo_avltree_rust::authenticated_tree_ops::AuthenticatedTreeOps;
 use ergo_avltree_rust::batch_avl_prover::BatchAVLProver;
 use ergo_avltree_rust::batch_node::{AVLTree, Node, NodeHeader};
 use ergo_lib::chain::ergo_box::box_builder::ErgoBoxCandidateBuilder;
+use ergo_lib::chain::transaction::ergo_transaction::ErgoTransaction;
 use ergo_lib::chain::transaction::unsigned::UnsignedTransaction;
 use ergo_lib::chain::transaction::{DataInput, Transaction};
 use ergo_lib::ergo_chain_types::{ADDigest, EcPoint};
@@ -18,7 +19,6 @@ use ergo_lib::ergotree_ir::chain::token::Token;
 use ergo_lib::ergotree_ir::ergo_tree::ErgoTree;
 use ergo_lib::ergotree_ir::mir::avl_tree_data::{AvlTreeData, AvlTreeFlags};
 use ergo_lib::wallet::box_selector::{BoxSelection, BoxSelector, SimpleBoxSelector};
-use ergo_lib::wallet::signing::ErgoTransaction;
 use ergo_lib::wallet::tx_builder::TxBuilder;
 use serde::{Deserialize, Serialize};
 
@@ -96,7 +96,7 @@ pub fn mint_note_transaction(
     )
     .build()?;
     let note = Note::new(
-        unsigned_transaction.outputs().first().clone(),
+        unsigned_transaction.outputs().first().unwrap().clone(),
         NoteHistory::new(),
     )
     .unwrap();
@@ -232,113 +232,28 @@ pub fn spend_note_transaction(
 
 #[cfg(test)]
 mod test {
-
     use ergo_lib::{
-        chain::{ergo_box::box_builder::ErgoBoxCandidateBuilder, transaction::TxId},
-        ergo_chain_types::EcPoint,
-        ergoscript_compiler::compiler,
         ergotree_interpreter::sigma_protocol::private_input::DlogProverInput,
-        ergotree_ir::{
-            chain::{
-                address::{Address, AddressEncoder, NetworkAddress, NetworkPrefix},
-                ergo_box::{
-                    box_value::BoxValue, ErgoBox, ErgoBoxCandidate, NonMandatoryRegisterId,
-                },
-                token::Token,
-            },
-            sigma_protocol::sigma_boolean::ProveDlog,
+        ergotree_ir::chain::{
+            address::{Address, NetworkAddress, NetworkPrefix},
+            ergo_box::box_value::BoxValue,
         },
         wallet::{signing::TransactionContext, Wallet},
     };
-    use proptest::arbitrary::Arbitrary;
-    use proptest::{
-        strategy::{Strategy, ValueTree},
-        test_runner::TestRunner,
-    };
-    use rand::{thread_rng, Rng};
 
     use crate::{
-        boxes::{Note, ReserveBoxSpec},
-        note_history::NoteHistory,
+        test_util::{create_note, create_reserve, create_wallet_box, force_any_val},
         transactions::TxContext,
     };
 
     use super::spend_note_transaction;
-
-    pub fn force_any_val<T: Arbitrary>() -> T {
-        let mut runner = TestRunner::default();
-        proptest::arbitrary::any::<T>()
-            .new_tree(&mut runner)
-            .unwrap()
-            .current()
-    }
-    // Pre-compiled note address since we need node to compile contract otherwise
-    const NOTE_ADDRESS: &'static str = "ZCrKu5bZniW2nkWfpGE5Tiyqk5VGcmb95ZmSbYAeq2jSt1PnP2LoXZBVBiAWRFt5pM6Eo8AtDMNwM4iesCcguSiiPnfnKKCHfcTh5kUCr3ZGXuMmABgPMjeHtkuthEU1coUkh1CYbw1xuiHC2udWCiLLRrUYJiT9i3hWNmgEm8DR3fgj4udrefshDR5capWKM55yeFYeht4wUs9RjBKGpGby89JWbQAa414wNU3BhYoPdhYHZfLfgddDPPCqwdVrwcEoMrfmtZFPUu1Q1xLqpVL5rbwM9mavDTXKpcvRvACW7J3jmUk8mAmH4PBJa14m2tcdxuntQo8GivAcxmEJpd36WSjrc6cHiXzq4R3e6fSNu7QWxAYyHafxR8LTGkss919iUWyzKZtNVJuAu9wGKP9FeJSXGDAopK1nR4dthbLvRVArRbTkhQSSD3MdT1PAZkjxvRZhfVEzf6FbHPocHkqfJf5fpLqqzB7TyP9utee6vAaw2UZiYAaj94PdYpJYxTUDT61zWQsZhG6Wtx5LDm6nVUN5A9xoBqiLEpSYQeuz5vk4ryv3ErXqMNT1Rp";
-    fn create_box(box_candidate: ErgoBoxCandidate) -> ErgoBox {
-        let mut rng = thread_rng();
-        ErgoBox::from_box_candidate(
-            &box_candidate,
-            TxId::zero(),
-            rng.gen_range(0..i16::MAX as u16),
-        )
-        .unwrap()
-    }
-    fn create_wallet_box(public_key: EcPoint, amount: u64) -> ErgoBox {
-        let tree = Address::P2Pk(ProveDlog::new(public_key)).script().unwrap();
-        let box_candidate = ErgoBoxCandidateBuilder::new(BoxValue::new(amount).unwrap(), tree, 0)
-            .build()
-            .unwrap();
-        create_box(box_candidate)
-    }
-
-    // Create fake reserve box with registers set properly (script does not matter for testing spending)
-    fn create_fake_reserve(public_key: EcPoint) -> ReserveBoxSpec {
-        let tree = compiler::compile("HEIGHT", Default::default()).unwrap();
-        let mut box_candidate = ErgoBoxCandidateBuilder::new(BoxValue::SAFE_USER_MIN, tree, 0);
-        box_candidate.set_register_value(NonMandatoryRegisterId::R4, public_key.into());
-        box_candidate.add_token(Token {
-            token_id: serde_json::from_str(
-                "\"161A3A5250655368566D597133743677397A24432646294A404D635166546A57\"",
-            )
-            .unwrap(),
-            amount: 1.try_into().unwrap(),
-        });
-        ReserveBoxSpec::try_from(&create_box(box_candidate.build().unwrap())).unwrap()
-    }
-
-    fn create_note(public_key: &EcPoint, amount: u64) -> Note {
-        let mut note_box_candidate = ErgoBoxCandidateBuilder::new(
-            BoxValue::SAFE_USER_MIN,
-            AddressEncoder::new(ergo_lib::ergotree_ir::chain::address::NetworkPrefix::Mainnet)
-                .parse_address_from_str(NOTE_ADDRESS)
-                .unwrap()
-                .script()
-                .unwrap(),
-            0,
-        );
-        note_box_candidate.add_token(Token {
-            token_id: serde_json::from_str(
-                "\"4b2d8b7beb3eaac8234d9e61792d270898a43934d6a27275e4f3a044609c9f2a\"",
-            )
-            .unwrap(),
-            amount: amount.try_into().unwrap(),
-        });
-        let history = NoteHistory::new();
-        note_box_candidate
-            .set_register_value(NonMandatoryRegisterId::R4, history.to_avltree().into());
-        note_box_candidate
-            .set_register_value(NonMandatoryRegisterId::R5, (*public_key).clone().into());
-        note_box_candidate.set_register_value(NonMandatoryRegisterId::R6, 0i64.into());
-        Note::new(create_box(note_box_candidate.build().unwrap()), history).unwrap()
-    }
-
     // Test spending a note with change output
     #[test]
     fn test_spend_note() {
         let private_key = DlogProverInput::random();
         let public_key = private_key.public_image().h;
         let note = create_note(&public_key, 10);
-        let reserve = create_fake_reserve(*public_key.clone());
+        let reserve = create_reserve(*public_key.clone());
 
         let mut wallet_boxes = vec![create_wallet_box(*public_key.clone(), 1_000_000_000)];
         let recipient = DlogProverInput::random().public_image().h;

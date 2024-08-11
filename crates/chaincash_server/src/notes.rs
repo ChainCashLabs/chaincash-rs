@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use axum::extract::State;
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
@@ -6,12 +8,13 @@ use chaincash_offchain::transactions::notes::{
     MintNoteRequest, SignedMintNoteResponse, SignedSpendNoteResponse,
 };
 use chaincash_services::transaction::SpendNoteRequest;
+use chaincash_services::ServerState;
 use serde_json::json;
 
 use crate::api::ApiError;
 
 async fn mint_note(
-    State(state): State<crate::ServerState>,
+    State(state): State<Arc<ServerState>>,
     Json(body): Json<MintNoteRequest>,
 ) -> Result<Response, ApiError> {
     let SignedMintNoteResponse { note, transaction } = state.tx_service().mint_note(body).await?;
@@ -23,7 +26,7 @@ async fn mint_note(
 }
 
 async fn spend_note(
-    State(state): State<crate::ServerState>,
+    State(state): State<Arc<ServerState>>,
     Json(body): Json<SpendNoteRequest>,
 ) -> Result<Response, ApiError> {
     let SignedSpendNoteResponse {
@@ -37,13 +40,13 @@ async fn spend_note(
     Ok(response.into_response())
 }
 
-async fn list_notes(State(state): State<crate::ServerState>) -> Result<Response, ApiError> {
+async fn list_notes(State(state): State<Arc<ServerState>>) -> Result<Response, ApiError> {
     let notes = state.store.notes().notes()?;
     let response = Json(notes);
     Ok(response.into_response())
 }
 
-pub fn router() -> Router<crate::ServerState> {
+pub fn router() -> Router<Arc<ServerState>> {
     Router::new()
         .route("/", get(list_notes))
         .route("/spend", post(spend_note))

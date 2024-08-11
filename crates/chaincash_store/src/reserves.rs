@@ -40,9 +40,19 @@ impl ReserveRepository {
         Self { pool }
     }
 
-    pub fn add(&self, reserve_box: &ReserveBoxSpec) -> Result<Reserve, Error> {
-        let ergo_box = reserve_box.ergo_box();
+    pub fn add_or_update(&self, reserve_box: &ReserveBoxSpec) -> Result<Reserve, Error> {
         let mut conn = self.pool.get()?;
+        let old_box = schema::reserves::table
+            .filter(schema::reserves::identifier.eq(String::from(reserve_box.identifier)))
+            .select(schema::reserves::box_id)
+            .first::<i32>(&mut conn)
+            .optional()?;
+        if let Some(old_box_id) = old_box {
+            diesel::delete(schema::ergo_boxes::table)
+                .filter(schema::ergo_boxes::id.eq(old_box_id))
+                .execute(&mut conn)?;
+        }
+        let ergo_box = reserve_box.ergo_box();
         let created_box = ErgoBoxRepository::add_with_conn(conn.borrow_mut(), ergo_box)?;
         let new_reserve = NewReserve {
             box_id: created_box.id,
@@ -53,7 +63,7 @@ impl ReserveRepository {
         let query = diesel::insert_into(schema::reserves::table)
             .values(&new_reserve)
             .returning(Reserve::as_returning());
-        Ok(query.get_result(conn.borrow_mut())?)
+        Ok(query.get_result(&mut conn)?)
     }
 
     pub fn get_reserve_by_identifier(&self, identifier: &TokenId) -> Result<ReserveBoxSpec, Error> {

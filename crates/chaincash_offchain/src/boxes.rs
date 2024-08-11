@@ -36,6 +36,8 @@ pub enum Error {
         box_digest: ADDigest,
         history_digest: ADDigest,
     },
+    #[error("Chain length in register R6 does not match, expected {expected}, found {found}")]
+    InvalidChainLength { expected: u64, found: u64 },
     #[error(
         "Private key provided derives to public key {found_pubkey}, expected {expected_pubkey}"
     )]
@@ -55,12 +57,6 @@ pub struct Note {
 }
 
 impl Note {
-    /// TODO: verify note contract matches. since contracts are compiled by node at the moment this will probably have to be done outside of Note::new
-    /// note.es also says:   to create a note (issue new money accounted in milligrams of gols), one needs to create a box locked with this
-    //  contract, R4 containing empty AVL+ tree digest, R5 containing public key (encoded elliptic curve point) of the
-    //  issuer, R6 equals to 0, and tokens slot #0 contains all the tokens issued (maybe in the same transaction). If
-    //  any of the conditions not met (any register has another value, some tokens sent to other address or contract),
-    //  the note should be ignored by ChainCash software. need node/explorer API access to verify this
     pub fn new(note_box: ErgoBox, history: NoteHistory) -> Result<Self, Error> {
         let owner = note_box
             .get_register(NonMandatoryRegisterId::R5.into())?
@@ -92,6 +88,12 @@ impl Note {
             .map_err(|_| Error::InvalidField {
                 field: "chain length",
             })?;
+        if chain_length != history.ownership_entries().len() as u64 {
+            return Err(Error::InvalidChainLength {
+                expected: chain_length,
+                found: history.ownership_entries().len() as u64,
+            });
+        }
         let box_avltree = note_box
             .get_register(NonMandatoryRegisterId::R4.into())?
             .ok_or_else(|| Error::FieldNotSet("avl tree"))
@@ -155,7 +157,6 @@ impl Note {
         let bytes_to_sign = self.bytes_to_sign();
         let signature = sign(&bytes_to_sign, private_key);
         Ok(OwnershipEntry {
-            position: self.length,
             reserve_id,
             amount: self.amount.into(),
             signature,
