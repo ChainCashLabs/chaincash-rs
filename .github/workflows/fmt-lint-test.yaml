@@ -57,7 +57,7 @@ jobs:
               - '**/Cargo.toml'
 
       # Only run if there are changes to Cargo.toml or Cargo.lock
-      - if: steps.filter.outputs.cargo == 'true'
+      - if: matrix.os == 'ubuntu-latest' && steps.filter.outputs.cargo == 'true'
         name: cargo-deny
         uses: EmbarkStudios/cargo-deny-action@v1
         with:
