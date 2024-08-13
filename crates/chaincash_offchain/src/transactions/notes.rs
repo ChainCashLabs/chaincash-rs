@@ -49,7 +49,7 @@ pub fn mint_note_transaction(
     let prover = BatchAVLProver::new(
         AVLTree::new(
             |digest| Node::LabelOnly(NodeHeader::new(Some(*digest), None)),
-            32,
+            40,
             None,
         ),
         true,
@@ -65,7 +65,7 @@ pub fn mint_note_transaction(
     let avl_tree = AvlTreeData {
         digest,
         tree_flags: avl_flags,
-        key_length: 32,
+        key_length: 40,
         value_length_opt: None,
     };
     let token_id = inputs

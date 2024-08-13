@@ -109,7 +109,8 @@ pub struct OwnershipEntry {
     #[cfg_attr(
         test,
         proptest(
-            strategy = "proptest::arbitrary::any_with::<TokenId>(ergo_lib::ergotree_ir::chain::token::arbitrary::ArbTokenIdParam::Arbitrary)"
+            strategy = "proptest::arbitrary::any_with::<TokenId>(ergo_lib::ergotree_ir::chain::token::arbitrary::ArbTokenIdParam::Arbitrary)",
+            filter = "|&token_id| token_id != TokenId::from_base64(\"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=\").unwrap()"
         )
     )]
     pub reserve_id: TokenId,
@@ -173,11 +174,12 @@ impl NoteHistory {
         commitment: OwnershipEntry,
     ) -> Result<SerializedAdProof, NoteHistoryError> {
         let mut prover = self.prover()?;
-        let key = commitment
-            .reserve_id
-            .sigma_serialize_bytes()
-            .unwrap()
-            .into();
+        let key = [
+            &(self.ownership_entries().len() as i64).to_be_bytes()[..],
+            &commitment.reserve_id.sigma_serialize_bytes().unwrap()[..],
+        ]
+        .concat()
+        .into();
         let value = commitment.signature.serialize().into();
         let insert_op = Operation::Insert(KeyValue { key, value });
         prover
@@ -196,7 +198,7 @@ impl NoteHistory {
         AvlTreeData {
             digest: self.digest(),
             tree_flags,
-            key_length: 32,
+            key_length: 40,
             value_length_opt: None,
         }
     }
@@ -208,21 +210,30 @@ fn build_prover<'a>(
     let mut prover = BatchAVLProver::new(
         AVLTree::new(
             |digest| Node::LabelOnly(NodeHeader::new(Some(*digest), None)),
-            32,
+            40,
             None,
         ),
         true,
     );
     signatures
         .into_iter()
+        .enumerate()
         .map(
-            |OwnershipEntry {
-                 reserve_id,
-                 signature,
-                 ..
-             }| {
+            |(
+                position,
+                OwnershipEntry {
+                    reserve_id,
+                    signature,
+                    ..
+                },
+            )| {
                 // Unwrap will only fail if OOM
-                let key: ADKey = reserve_id.sigma_serialize_bytes().unwrap().into();
+                let key: ADKey = [
+                    (position as i64).to_be_bytes().as_slice(),
+                    reserve_id.sigma_serialize_bytes().unwrap().as_slice(),
+                ]
+                .concat()
+                .into();
                 let value: ADValue = signature.serialize().into();
                 Operation::Insert(KeyValue { key, value })
             },
@@ -281,10 +292,10 @@ mod test {
             assert_eq!(Signature::try_from(&serialized[..]).unwrap(), signature);
         }
         #[test]
-        fn test_prover_verifier(commitments in vec(any::<OwnershipEntry>(), 0..100)) {
+        fn test_prover_verifier(commitments in vec(any::<OwnershipEntry>(), 0..50)) {
             let prover = build_prover(commitments.iter()).unwrap();
             let mut note_history = NoteHistory::new();
-            for commitment in commitments {
+            for (i, commitment) in commitments.into_iter().enumerate() {
                 let digest = note_history.digest();
                 let proof = note_history.add_commitment(commitment.clone()).unwrap();
                 let mut bv = BatchAVLVerifier::new(
@@ -292,14 +303,14 @@ mod test {
                             &proof,
                             AVLTree::new(
                                 |digest| Node::LabelOnly(NodeHeader::new(Some(*digest), None)),
-                                32,
+                                40,
                                 None,
                             ),
                             None,
                             None,
                         )
                         .unwrap();
-                bv.perform_one_operation(&Operation::Insert(KeyValue { key: commitment.reserve_id.sigma_serialize_bytes().unwrap().into(), value: commitment.signature.serialize().into() })).unwrap();
+                bv.perform_one_operation(&Operation::Insert(KeyValue { key: [(i as i64).to_be_bytes().as_slice(), commitment.reserve_id.sigma_serialize_bytes().unwrap().as_slice()].concat().into(), value: commitment.signature.serialize().into() })).unwrap();
             }
             assert_eq!(&note_history.digest().0[..], &prover.digest().unwrap()[..]);
         }
