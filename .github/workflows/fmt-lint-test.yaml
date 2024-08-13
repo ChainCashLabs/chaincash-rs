@@ -1,0 +1,57 @@
+name: Format, Lint and Test
+on: [push]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fmt-lint-test:
+    name: x86 Format, Lint Checks and Tests
+    timeout-minutes: 45
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: 'true'
+
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          components: clippy, rustfmt
+          override: true
+          profile: minimal
+          toolchain: 1.80.0
+
+      - name: Cargo cache
+        uses: ./.github/actions/cargo-cache
+
+      - name: fmt check
+        # Format checks aren't OS dependent.
+        if: matrix.os == 'ubuntu-latest'
+        run: cargo fmt --all -- --check --color always
+
+      - name: Clippy lint
+        run: cargo clippy --all-features -- -D warnings
+
+      - name: Test
+        run: cargo test
+
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            cargo:
+              - '**/Cargo.lock'
+              - '**/Cargo.toml'
+
+      # Only run if there are changes to Cargo.toml or Cargo.lock
+      - if: steps.filter.outputs.cargo == 'true'
+        name: cargo-deny
+        uses: EmbarkStudios/cargo-deny-action@v1
+        with:
+          command: check bans licenses sources
