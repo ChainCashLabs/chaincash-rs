@@ -4,8 +4,10 @@ use crate::schema;
 use crate::ConnectionPool;
 use crate::Error;
 use chaincash_offchain::boxes::ReserveBoxSpec;
+use diesel::dsl::delete;
 use diesel::prelude::*;
 use ergo_lib::ergotree_ir::chain;
+use ergo_lib::ergotree_ir::chain::ergo_box::BoxId;
 use ergo_lib::ergotree_ir::chain::token::TokenId;
 use std::borrow::BorrowMut;
 
@@ -95,5 +97,20 @@ impl ReserveRepository {
             })
             .collect::<Result<Vec<_>, Box<dyn std::error::Error>>>()
             .expect("Failed to parse ReserveBoxSpec from database"))
+    }
+
+    /// Delete boxes that are not in latest scan (spent)
+    pub fn delete_not_in(&self, ids: impl Iterator<Item = BoxId>) -> Result<Vec<String>, Error> {
+        let mut conn = self.pool.get()?;
+        let ids = ids.map(|id| id.to_string());
+        let spent_boxes = schema::reserves::table
+            .inner_join(schema::ergo_boxes::table)
+            .filter(diesel::dsl::not(schema::ergo_boxes::ergo_id.eq_any(ids)))
+            .select(schema::ergo_boxes::id)
+            .into_boxed();
+        let query = delete(schema::ergo_boxes::table)
+            .filter(schema::ergo_boxes::id.eq_any(spent_boxes))
+            .returning(schema::ergo_boxes::ergo_id);
+        query.load(&mut conn).map_err(Into::into)
     }
 }
