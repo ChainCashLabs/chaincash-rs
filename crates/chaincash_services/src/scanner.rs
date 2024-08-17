@@ -19,7 +19,6 @@ use ergo_lib::{
             token::TokenId,
         },
         ergo_tree::ErgoTree,
-        mir::constant::TryExtractInto,
         serialization::SigmaSerializable,
     },
 };
@@ -42,6 +41,81 @@ pub enum ScannerError {
     InvalidTransaction(TxId),
     #[error("Note {0:?} validation failed at TX id: {1}, reserve contract invalid")]
     InvalidReserveBox(TokenId, TxId),
+}
+
+struct ContractScan<'a> {
+    scan_type: ScanType,
+    scan: Scan<'a>,
+}
+
+impl<'a> ContractScan<'a> {
+    async fn new(
+        state: &ServerState,
+        scan_type: ScanType,
+        public_keys: &[EcPoint],
+    ) -> Result<Self, ScannerError> {
+        let (contract, register) = match scan_type {
+            ScanType::Reserves => (
+                state.compiler.reserve_contract().await?,
+                NonMandatoryRegisterId::R4,
+            ),
+            ScanType::Notes => (
+                state.compiler.note_contract().await?,
+                NonMandatoryRegisterId::R5,
+            ),
+            ScanType::Receipts => (
+                state.compiler.receipt_contract().await?,
+                NonMandatoryRegisterId::R7,
+            ),
+        };
+        let scan = Self::pubkey_scan(
+            format!("Chaincash {} scan", scan_type.to_str()),
+            contract,
+            register,
+            public_keys,
+        );
+        Ok(Self { scan_type, scan })
+    }
+
+    fn pubkey_scan(
+        scan_name: impl Into<std::borrow::Cow<'a, str>>,
+        contract: &ErgoTree,
+        pubkey_register: NonMandatoryRegisterId,
+        public_keys: &[EcPoint],
+    ) -> Scan<'a> {
+        Scan {
+            scan_name: scan_name.into(),
+            wallet_interaction: "off".into(),
+            tracking_rule: TrackingRule::And {
+                args: vec![
+                    TrackingRule::Contains {
+                        register: Some(RegisterId::R1),
+                        value: contract.sigma_serialize_bytes().unwrap().into(),
+                    },
+                    TrackingRule::Or {
+                        args: public_keys
+                            .iter()
+                            .map(|pubkey| TrackingRule::Equals {
+                                register: Some(pubkey_register.into()),
+                                value: pubkey.clone().into(),
+                            })
+                            .collect(),
+                    },
+                ],
+            },
+            remove_offchain: true,
+        }
+    }
+    async fn register(
+        &'a self,
+        state: &ServerState,
+    ) -> Result<chaincash_store::scans::Scan<'a>, ScannerError> {
+        let scan_id = state.node.endpoints().scan()?.register(&self.scan).await?;
+        let store_scan =
+            chaincash_store::scans::Scan::new(scan_id, &*self.scan.scan_name, self.scan_type);
+        state.store.scans().add(&store_scan)?;
+        Ok(store_scan)
+    }
 }
 
 // Wait for the next block before re-checking scans
@@ -67,83 +141,6 @@ async fn get_transaction(
         .find(|tx| tx.id() == *tx_id))
 }
 
-fn pubkey_scan<'a>(
-    scan_name: impl Into<std::borrow::Cow<'a, str>>,
-    contract: &ErgoTree,
-    pubkey_register: NonMandatoryRegisterId,
-    public_keys: &[EcPoint],
-) -> Scan<'a> {
-    Scan {
-        scan_name: scan_name.into(),
-        wallet_interaction: "off".into(),
-        tracking_rule: TrackingRule::And {
-            args: vec![
-                TrackingRule::Contains {
-                    register: Some(RegisterId::R1),
-                    value: contract.sigma_serialize_bytes().unwrap().into(),
-                },
-                TrackingRule::Or {
-                    args: public_keys
-                        .iter()
-                        .map(|pubkey| TrackingRule::Equals {
-                            register: Some(pubkey_register.into()),
-                            value: pubkey.clone().into(),
-                        })
-                        .collect(),
-                },
-            ],
-        },
-        remove_offchain: true,
-    }
-}
-
-fn pubkeys_from_scan(scan: &RegisteredScan) -> Option<Vec<EcPoint>> {
-    match &scan.scan.tracking_rule {
-        TrackingRule::And { args } => match &args[..] {
-            [.., TrackingRule::Or { args }] => Some(
-                args.iter()
-                    .filter_map(|arg| {
-                        if let TrackingRule::Equals { register: _, value } = arg {
-                            value.clone().try_extract_into::<EcPoint>().ok()
-                        } else {
-                            None
-                        }
-                    })
-                    .collect(),
-            ),
-            _ => None,
-        },
-        _ => None,
-    }
-}
-
-async fn register_scan<'a>(
-    state: &ServerState,
-    scan_type: ScanType,
-    public_keys: &[EcPoint],
-) -> Result<chaincash_store::scans::Scan<'a>, ScannerError> {
-    let name = format!("Chaincash {} scan", scan_type.to_str());
-    let (contract, register) = match scan_type {
-        ScanType::Reserves => (
-            state.compiler.reserve_contract().await?,
-            NonMandatoryRegisterId::R4,
-        ),
-        ScanType::Notes => (
-            state.compiler.note_contract().await?,
-            NonMandatoryRegisterId::R5,
-        ),
-        ScanType::Receipts => (
-            state.compiler.receipt_contract().await?,
-            NonMandatoryRegisterId::R7,
-        ),
-    };
-    let scan = pubkey_scan(name, contract, register, public_keys);
-    let scan_id = state.node.endpoints().scan()?.register(&scan).await?;
-    let store_scan = chaincash_store::scans::Scan::new(scan_id, scan.scan_name, scan_type);
-    state.store.scans().add(&store_scan)?;
-    Ok(store_scan)
-}
-
 // Load scans by type. If node changes then wrong scans will be detected and re-registered
 // Returns (needs_rescan, scan_type)
 async fn load_scan(
@@ -163,29 +160,20 @@ async fn load_scan(
             _ => None,
         })
         .collect::<Vec<_>>();
+    let contract_scan = ContractScan::new(state, scan_type, &addresses).await?;
     let scan = state.store.scans().scan_by_type(scan_type)?;
     if let Some(scan) = scan {
-        let node_scan = node_scans
-            .iter()
-            .find(|node_scan| scan.scan_name == node_scan.scan.scan_name);
-        if let Some(reserve_scan) = node_scan {
-            if let Some(scan_pubkeys) = pubkeys_from_scan(reserve_scan) {
-                if addresses.iter().all(|wallet_pubkey| {
-                    scan_pubkeys
-                        .iter()
-                        .any(|scan_pubkey| wallet_pubkey == scan_pubkey)
-                }) {
-                    return Ok((false, scan.scan_id));
-                }
-            } else {
-                warn!(
-                    "Scan #{} ({}) invalidated, re-registering",
-                    scan.scan_id, scan.scan_name
-                );
-            }
+        if node_scans.iter().any(|node_scan| {
+            scan.scan_id as u32 == node_scan.scan_id
+                && scan.scan_name == node_scan.scan.scan_name
+                && node_scan.scan == contract_scan.scan
+        }) {
+            return Ok((false, scan.scan_id));
+        } else {
+            warn!("Scan {} invalidated, re-registering", scan.scan_id);
         }
     }
-    let scan_id = register_scan(state, scan_type, &addresses).await?.scan_id;
+    let scan_id = contract_scan.register(state).await?.scan_id;
     Ok((true, scan_id))
 }
 
@@ -196,7 +184,7 @@ async fn reserve_scanner(state: Arc<ServerState>, scan_id: i32) -> Result<(), Sc
             .extensions()
             .get_all_unspent_boxes(scan_id as u32, false)
             .await?;
-        for scan_box in scan_boxes {
+        for scan_box in &scan_boxes {
             match ReserveBoxSpec::try_from(&scan_box.ergo_box) {
                 Ok(reserve_box) => {
                     state.store.reserves().add_or_update(&reserve_box)?;
@@ -207,6 +195,12 @@ async fn reserve_scanner(state: Arc<ServerState>, scan_id: i32) -> Result<(), Sc
                 ),
             }
         }
+        state
+            .store
+            .reserves()
+            .delete_not_in(scan_boxes.iter().map(|b| b.ergo_box.box_id()))?
+            .into_iter()
+            .for_each(|deleted| info!("Deleting box id: {deleted}"));
         wait_scan_block(&state).await?;
     }
 }
@@ -337,8 +331,8 @@ pub async fn start_scanner(state: Arc<ServerState>) -> Result<(), ScannerError> 
     let (rescan, note_scan) = load_scan(&state, ScanType::Notes, &scans).await?;
     needs_rescan |= rescan;
     if needs_rescan {
-        //Rescan from block #1,100,000. This height can be increased later when chaincash is deployed
-        let _ = state.node.endpoints().wallet()?.rescan(1_100_000).await;
+        //Rescan from block #1,318_639. This height can be increased later when chaincash is deployed
+        let _ = state.node.endpoints().wallet()?.rescan(1_318_639).await;
     }
     tokio::spawn(reserve_scanner(state.clone(), reserve_scan));
     tokio::spawn(note_scanner(state.clone(), note_scan));
