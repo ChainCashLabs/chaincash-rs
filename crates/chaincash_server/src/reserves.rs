@@ -41,13 +41,19 @@ async fn top_up_reserve(
     Ok(response.into_response())
 }
 
-async fn list_reserves(State(state): State<Arc<ServerState>>) -> Result<Response, ApiError> {
-    Ok(Json(state.store.reserves().reserve_boxes()?).into_response())
+async fn list_wallet_reserves(State(state): State<Arc<ServerState>>) -> Result<Response, ApiError> {
+    Ok(Json(
+        state
+            .store
+            .reserves()
+            .reserve_boxes_by_pubkeys(&state.wallet_pubkeys().await?)?,
+    )
+    .into_response())
 }
 
 pub fn router() -> Router<Arc<ServerState>> {
     Router::new()
         .route("/mint", post(mint_reserve))
         .route("/topup", post(top_up_reserve))
-        .route("/", get(list_reserves))
+        .route("/wallet", get(list_wallet_reserves))
 }
