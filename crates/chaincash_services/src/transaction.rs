@@ -203,7 +203,7 @@ impl<'a> TransactionService<'a> {
             request.recipient_pubkey,
             *request.amount.as_u64(),
             wallet_boxes,
-            tx_context,
+            &tx_context,
         )?;
 
         let transaction = self.node.extensions().sign_and_submit(transaction).await?;

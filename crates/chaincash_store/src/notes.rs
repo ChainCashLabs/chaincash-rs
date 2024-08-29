@@ -176,7 +176,7 @@ impl NoteRepository {
     pub fn notes_by_pubkeys(&self, pubkeys: &[EcPoint]) -> Result<Vec<NoteWithHistory>, Error> {
         let mut conn = self.pool.get()?;
         let notes = schema::notes::table
-            .filter(schema::notes::owner.eq_any(pubkeys.into_iter().cloned().map(String::from)))
+            .filter(schema::notes::owner.eq_any(pubkeys.iter().cloned().map(String::from)))
             .select(Note::as_select())
             .load(conn.borrow_mut())?;
         Ok(OwnershipEntry::belonging_to(&notes)
