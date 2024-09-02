@@ -7,7 +7,7 @@ use axum::{Json, Router};
 use chaincash_offchain::transactions::notes::{
     MintNoteRequest, SignedMintNoteResponse, SignedSpendNoteResponse,
 };
-use chaincash_services::transaction::SpendNoteRequest;
+use chaincash_services::transaction::{RedeemNoteRequest, SpendNoteRequest};
 use chaincash_services::ServerState;
 use ergo_lib::ergo_chain_types::EcPoint;
 use serde_json::json;
@@ -41,6 +41,17 @@ async fn spend_note(
     Ok(response.into_response())
 }
 
+async fn redeem_note(
+    State(state): State<Arc<ServerState>>,
+    Json(body): Json<RedeemNoteRequest>,
+) -> Result<Response, ApiError> {
+    let transaction = state.tx_service().redeem_note(body).await?;
+    let response = Json(json!({
+        "txId": transaction.id().to_string(),
+    }));
+    Ok(response.into_response())
+}
+
 async fn list_wallet_notes(State(state): State<Arc<ServerState>>) -> Result<Response, ApiError> {
     let pubkeys = state.wallet_pubkeys().await?;
     let notes = state.store.notes().notes_by_pubkeys(&pubkeys)?;
@@ -60,5 +71,6 @@ pub fn router() -> Router<Arc<ServerState>> {
         .route("/wallet", get(list_wallet_notes))
         .route("/byPubkey/:pubkey", get(by_pubkey))
         .route("/spend", post(spend_note))
+        .route("/redeem", post(redeem_note))
         .route("/mint", post(mint_note))
 }
