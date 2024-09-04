@@ -1,3 +1,4 @@
+use chaincash_offchain::oracle::{buyback_nft, oracle_nft};
 use chaincash_offchain::transactions::notes::{
     mint_note_transaction, redeem_note, spend_note_transaction, MintNoteRequest, MintNoteResponse,
     SignedMintNoteResponse, SignedSpendNoteResponse, SpendNoteResponse,
@@ -237,13 +238,13 @@ impl<'a> TransactionService<'a> {
             .reserves()
             .get_reserve_by_identifier(&request.reserve_id)?;
         let receipt_contract = self.compiler.receipt_contract().await?;
-        // TODO: externalize buyback/oracle NFT
+        let is_mainnet = self.node.endpoints().root()?.info().await?.network == "mainnet";
         let buyback_box = &self
             .node
             .endpoints()
             .blockchain()?
             .get_unspent_boxes_by_token_id(
-                "119a068a0119670de8a5d2467da33df572903c64aaa7b6ea4c9668ef0cfe0325",
+                &String::from(buyback_nft(is_mainnet)),
                 IndexQuery {
                     offset: 0,
                     limit: 1,
@@ -261,7 +262,7 @@ impl<'a> TransactionService<'a> {
             .endpoints()
             .blockchain()?
             .get_unspent_boxes_by_token_id(
-                "3c45f29a5165b030fdb5eaf5d81f8108f9d8f507b31487dd51f4ae08fe07cf4a",
+                &String::from(oracle_nft(is_mainnet)),
                 IndexQuery {
                     offset: 0,
                     limit: 1,

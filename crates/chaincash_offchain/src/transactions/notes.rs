@@ -220,7 +220,7 @@ pub fn spend_note_transaction(
     let transaction = tx_builder.build()?;
 
     let recipient_note = Note::new(
-        transaction.outputs().get(0).unwrap().clone(),
+        transaction.outputs().first().unwrap().clone(),
         new_history.clone(),
     )
     .unwrap();
@@ -324,8 +324,8 @@ pub fn redeem_note(
             .ok_or(BoxValueError::Overflow)?,
     )?;
     let receipt_output = create_receipt_candidate(
-        &note_box,
-        &reserve_box,
+        note_box,
+        reserve_box,
         position,
         receipt_contract,
         context.current_height,

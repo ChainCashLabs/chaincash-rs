@@ -13,7 +13,7 @@ use ergo_lib::{
     chain::transaction::{ergo_transaction::ErgoTransaction, Transaction, TxId},
     ergotree_ir::{
         chain::{
-            ergo_box::{ErgoBox, NonMandatoryRegisterId, RegisterId},
+            ergo_box::{ErgoBox, RegisterId},
             token::TokenId,
         },
         ergo_tree::ErgoTree,
@@ -48,19 +48,10 @@ struct ContractScan<'a> {
 
 impl<'a> ContractScan<'a> {
     async fn new(state: &ServerState, scan_type: ScanType) -> Result<Self, ScannerError> {
-        let (contract, _) = match scan_type {
-            ScanType::Reserves => (
-                state.compiler.reserve_contract().await?,
-                NonMandatoryRegisterId::R4,
-            ),
-            ScanType::Notes => (
-                state.compiler.note_contract().await?,
-                NonMandatoryRegisterId::R5,
-            ),
-            ScanType::Receipts => (
-                state.compiler.receipt_contract().await?,
-                NonMandatoryRegisterId::R7,
-            ),
+        let contract = match scan_type {
+            ScanType::Reserves => state.compiler.reserve_contract().await?,
+            ScanType::Notes => state.compiler.note_contract().await?,
+            ScanType::Receipts => state.compiler.receipt_contract().await?,
         };
         let scan = Self::contract_scan(format!("Chaincash {} scan", scan_type.to_str()), contract);
         Ok(Self { scan_type, scan })
@@ -280,7 +271,7 @@ async fn note_backward_scan(state: &ServerState, note_box: ErgoBox) -> Result<No
 
 async fn note_scanner(state: Arc<ServerState>, scan_ids: Vec<i32>) -> Result<(), ScannerError> {
     loop {
-        let scan_boxes = get_all_scan_boxes(&scan_ids, &*state).await.unwrap();
+        let scan_boxes = get_all_scan_boxes(&scan_ids, &state).await.unwrap();
         for scan_box in &scan_boxes {
             let box_id = scan_box.ergo_box.box_id();
             if state
