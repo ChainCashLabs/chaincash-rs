@@ -149,17 +149,16 @@ impl OwnershipEntry {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct NoteHistory {
     ownership_entries: Vec<OwnershipEntry>,
 }
 
 impl NoteHistory {
     pub fn new() -> Self {
-        NoteHistory {
-            ownership_entries: vec![],
-        }
+        Self::default()
     }
+
     pub fn ownership_entries(&self) -> &[OwnershipEntry] {
         &self.ownership_entries
     }

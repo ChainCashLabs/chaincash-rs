@@ -5,5 +5,3 @@ pub mod note_history;
 #[cfg(test)]
 pub(crate) mod test_util;
 pub mod transactions;
-
-use thiserror::Error;

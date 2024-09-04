@@ -10,8 +10,8 @@ use chaincash_offchain::transactions::{TransactionError, TxContext};
 use chaincash_store::ChainCashStore;
 use ergo_client::node::NodeClient;
 use ergo_lib::ergo_chain_types::EcPoint;
-use ergo_lib::ergotree_ir::chain::ergo_box::box_value::BoxValue;
-use ergo_lib::ergotree_ir::chain::ergo_box::{box_value::BoxValueError, ErgoBox};
+use ergo_lib::ergotree_ir::chain::ergo_box::box_value::{BoxValue, BoxValueError};
+use ergo_lib::ergotree_ir::chain::ergo_box::ErgoBox;
 use ergo_lib::ergotree_ir::chain::token::{TokenAmount, TokenId};
 use ergo_lib::wallet::box_selector::{
     BoxSelection, BoxSelector, BoxSelectorError, SimpleBoxSelector,
@@ -88,13 +88,13 @@ impl<'a> TransactionService<'a> {
             .get_utxos_summing_amount(amount)
             .await?;
         // kinda irrelevant since we already have suitable boxes but box selectors required by ergo-lib txbuilder
-        Ok(SimpleBoxSelector::new()
+        SimpleBoxSelector::new()
             .select(
                 inputs,
                 amount.try_into().map_err(TransactionServiceError::from)?,
                 &[],
             )
-            .map_err(TransactionServiceError::from)?)
+            .map_err(TransactionServiceError::from)
     }
 
     async fn get_tx_ctx(&self) -> Result<TxContext, TransactionServiceError> {

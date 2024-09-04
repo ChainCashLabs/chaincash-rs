@@ -1,7 +1,7 @@
+use super::{TransactionError, TxContext};
 use crate::boxes::{Note, ReserveBoxSpec};
 use crate::note_history::NoteHistory;
 
-use super::{TransactionError, TxContext};
 use ergo_avltree_rust::authenticated_tree_ops::AuthenticatedTreeOps;
 use ergo_avltree_rust::batch_avl_prover::BatchAVLProver;
 use ergo_avltree_rust::batch_node::{AVLTree, Node, NodeHeader};
@@ -14,8 +14,8 @@ use ergo_lib::ergotree_interpreter::sigma_protocol::prover::ContextExtension;
 use ergo_lib::ergotree_interpreter::sigma_protocol::wscalar::Wscalar;
 use ergo_lib::ergotree_ir::chain::address::NetworkAddress;
 use ergo_lib::ergotree_ir::chain::ergo_box::box_value::BoxValue;
-use ergo_lib::ergotree_ir::chain::ergo_box::{ErgoBoxCandidate, NonMandatoryRegisterId};
-use ergo_lib::ergotree_ir::chain::{ergo_box::ErgoBox, token::Token};
+use ergo_lib::ergotree_ir::chain::ergo_box::{ErgoBox, ErgoBoxCandidate, NonMandatoryRegisterId};
+use ergo_lib::ergotree_ir::chain::token::Token;
 use ergo_lib::ergotree_ir::ergo_tree::ErgoTree;
 use ergo_lib::ergotree_ir::mir::avl_tree_data::{AvlTreeData, AvlTreeFlags};
 use ergo_lib::wallet::box_selector::{BoxSelection, BoxSelector, SimpleBoxSelector};
@@ -217,7 +217,7 @@ pub fn spend_note_transaction(
     let transaction = tx_builder.build()?;
 
     let recipient_note = Note::new(
-        transaction.outputs().get(0).unwrap().clone(),
+        transaction.outputs().first().unwrap().clone(),
         new_history.clone(),
     )
     .unwrap();
