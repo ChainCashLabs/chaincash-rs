@@ -11,10 +11,8 @@ use ergo_client::node::{
 };
 use ergo_lib::{
     chain::transaction::{ergo_transaction::ErgoTransaction, Transaction, TxId},
-    ergo_chain_types::EcPoint,
     ergotree_ir::{
         chain::{
-            address::Address,
             ergo_box::{ErgoBox, NonMandatoryRegisterId, RegisterId},
             token::TokenId,
         },
@@ -49,12 +47,8 @@ struct ContractScan<'a> {
 }
 
 impl<'a> ContractScan<'a> {
-    async fn new(
-        state: &ServerState,
-        scan_type: ScanType,
-        public_keys: &[EcPoint],
-    ) -> Result<Self, ScannerError> {
-        let (contract, register) = match scan_type {
+    async fn new(state: &ServerState, scan_type: ScanType) -> Result<Self, ScannerError> {
+        let (contract, _) = match scan_type {
             ScanType::Reserves => (
                 state.compiler.reserve_contract().await?,
                 NonMandatoryRegisterId::R4,
@@ -68,40 +62,22 @@ impl<'a> ContractScan<'a> {
                 NonMandatoryRegisterId::R7,
             ),
         };
-        let scan = Self::pubkey_scan(
-            format!("Chaincash {} scan", scan_type.to_str()),
-            contract,
-            register,
-            public_keys,
-        );
+        let scan = Self::contract_scan(format!("Chaincash {} scan", scan_type.to_str()), contract);
         Ok(Self { scan_type, scan })
     }
 
-    fn pubkey_scan(
+    fn contract_scan(
         scan_name: impl Into<std::borrow::Cow<'a, str>>,
         contract: &ErgoTree,
-        pubkey_register: NonMandatoryRegisterId,
-        public_keys: &[EcPoint],
     ) -> Scan<'a> {
         Scan {
             scan_name: scan_name.into(),
             wallet_interaction: "off".into(),
             tracking_rule: TrackingRule::And {
-                args: vec![
-                    TrackingRule::Contains {
-                        register: Some(RegisterId::R1),
-                        value: contract.sigma_serialize_bytes().unwrap().into(),
-                    },
-                    TrackingRule::Or {
-                        args: public_keys
-                            .iter()
-                            .map(|pubkey| TrackingRule::Equals {
-                                register: Some(pubkey_register.into()),
-                                value: pubkey.clone().into(),
-                            })
-                            .collect(),
-                    },
-                ],
+                args: vec![TrackingRule::Contains {
+                    register: Some(RegisterId::R1),
+                    value: contract.sigma_serialize_bytes().unwrap().into(),
+                }],
             },
             remove_offchain: true,
         }
@@ -148,19 +124,7 @@ async fn load_scan(
     scan_type: ScanType,
     node_scans: &[RegisteredScan<'_>],
 ) -> Result<(bool, i32), ScannerError> {
-    let addresses = state
-        .node
-        .endpoints()
-        .wallet()?
-        .get_addresses()
-        .await?
-        .into_iter()
-        .filter_map(|addr| match addr.address() {
-            Address::P2Pk(pk) => Some((*pk.h).clone()),
-            _ => None,
-        })
-        .collect::<Vec<_>>();
-    let contract_scan = ContractScan::new(state, scan_type, &addresses).await?;
+    let contract_scan = ContractScan::new(state, scan_type).await?;
     let scan = state.store.scans().scan_by_type(scan_type)?;
     if let Some(scan) = scan {
         if node_scans.iter().any(|node_scan| {

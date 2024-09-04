@@ -15,6 +15,7 @@ hyper = { version = "0.14.27", features = ["full"] }
 tracing = { workspace = true }
 tokio = { workspace = true }
 thiserror = { workspace = true }
+ergo-lib = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 ergo_client = { workspace = true }

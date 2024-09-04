@@ -456,6 +456,7 @@ dependencies = [
  "chaincash_predicate",
  "chaincash_services",
  "chaincash_store",
+ "ergo-lib",
  "ergo_client",
  "hyper 0.14.30",
  "serde",
