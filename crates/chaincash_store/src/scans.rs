@@ -4,7 +4,7 @@ use std::borrow::{BorrowMut, Cow};
 
 use diesel::{
     prelude::{AsChangeset, Insertable, Queryable},
-    ExpressionMethods, OptionalExtension, QueryDsl, RunQueryDsl, Selectable,
+    ExpressionMethods, QueryDsl, RunQueryDsl, Selectable,
 };
 
 use crate::{schema, ConnectionPool, Error};

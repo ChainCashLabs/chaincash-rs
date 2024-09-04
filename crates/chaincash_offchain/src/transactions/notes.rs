@@ -247,12 +247,9 @@ fn create_receipt_candidate(
         token_id: note.note_id,
         amount: note.amount,
     });
-    box_candidate.set_register_value(NonMandatoryRegisterId::R4, note.history.digest().into());
+    box_candidate.set_register_value(NonMandatoryRegisterId::R4, note.history.to_avltree().into());
     box_candidate.set_register_value(NonMandatoryRegisterId::R5, position.into());
-    box_candidate.set_register_value(
-        NonMandatoryRegisterId::R6,
-        (height.saturating_sub(20) as i32).into(),
-    );
+    box_candidate.set_register_value(NonMandatoryRegisterId::R6, (height as i32).into());
     box_candidate.set_register_value(NonMandatoryRegisterId::R7, reserve.owner.clone().into());
     Ok(box_candidate.build()?)
 }
@@ -318,6 +315,7 @@ pub fn redeem_note(
         })
     }
     let mut reserve_output = ErgoBoxCandidate::from(reserve_box.ergo_box().clone());
+    reserve_output.creation_height = context.current_height;
     reserve_output.value = BoxValue::new(
         reserve_output
             .value
@@ -333,6 +331,7 @@ pub fn redeem_note(
         context.current_height,
     )?;
     let mut buyback_output = ErgoBoxCandidate::from(buyback_box.clone());
+    buyback_output.creation_height = context.current_height;
     buyback_output.value = BoxValue::new(buyback_output.value.as_u64() + to_oracle)?;
     let mut tx_builder = TxBuilder::new(
         BoxSelection {
@@ -368,18 +367,24 @@ pub fn redeem_note(
         context_extension.values.insert(0, (-1i8).into());
         context_extension
     });
+    tx_builder.set_context_extension(buyback_box.box_id(), {
+        let mut context_extension = ContextExtension::empty();
+        context_extension.values.insert(0, (1i32).into());
+        context_extension
+    });
     Ok(tx_builder.build()?)
 }
 
 #[cfg(test)]
 mod test {
     use ergo_lib::{
+        chain::ergo_state_context::ErgoStateContext,
         ergotree_interpreter::sigma_protocol::private_input::DlogProverInput,
         ergotree_ir::chain::{
             address::{Address, AddressEncoder, NetworkAddress, NetworkPrefix},
             ergo_box::box_value::BoxValue,
         },
-        wallet::{signing::TransactionContext, Wallet},
+        wallet::{secret_key::SecretKey, signing::TransactionContext, Wallet},
     };
 
     use crate::{
@@ -446,8 +451,9 @@ mod test {
         let note = create_note(&reserve_owner_pk, 1000);
         let reserve = create_reserve(reserve_owner_pk.clone(), 1_000_000_000);
 
+        let state_context = force_any_val::<ErgoStateContext>();
         let context = TxContext {
-            current_height: 0,
+            current_height: state_context.pre_header.height,
             change_address: NetworkAddress::new(
                 NetworkPrefix::Mainnet,
                 &Address::P2Pk(reserve_owner_sk.public_image()),
@@ -497,6 +503,20 @@ mod test {
             wallet_boxes[0].value.as_u64() - context.fee
                 + (((NANOERG_PER_KG / 1_000_000) * note.amount.as_u64() * 98) / 100) * 998 / 1000,
         );
+        let mut input_boxes = wallet_boxes.clone();
+        input_boxes.extend_from_slice(&[
+            recipient_note.ergo_box().clone(),
+            buyback_box.clone(),
+            reserve.ergo_box().clone(),
+        ]);
+        let wallet = Wallet::from_secrets(vec![SecretKey::DlogSecretKey(recipient_sk)]);
+        wallet
+            .sign_transaction(
+                TransactionContext::new(tx, input_boxes.clone(), vec![oracle_box.clone()]).unwrap(),
+                &state_context,
+                None,
+            )
+            .unwrap();
         // Test redemption against undercollateralized reserve. In this case we can only redeem reserve.value - minimum amount of ERG needed for new box
         let reserve = create_reserve(reserve_owner_pk, BoxValue::SAFE_USER_MIN.as_u64() + 1000);
 
@@ -510,6 +530,12 @@ mod test {
             &context,
         )
         .unwrap();
+        let mut input_boxes = wallet_boxes.clone();
+        input_boxes.extend_from_slice(&[
+            recipient_note.ergo_box().clone(),
+            buyback_box.clone(),
+            reserve.ergo_box().clone(),
+        ]);
         assert_eq!(
             *tx.output_candidates
                 .get(tx.output_candidates.len() - 2)
@@ -518,5 +544,12 @@ mod test {
                 .as_u64(),
             wallet_boxes[0].value.as_u64() - context.fee + 998
         );
+        wallet
+            .sign_transaction(
+                TransactionContext::new(tx, input_boxes.clone(), vec![oracle_box.clone()]).unwrap(),
+                &state_context,
+                None,
+            )
+            .unwrap();
     }
 }
