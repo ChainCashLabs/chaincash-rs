@@ -1,4 +1,7 @@
-use chaincash_offchain::contracts::{NOTE_CONTRACT, RECEIPT_CONTRACT, RESERVE_CONTRACT};
+use chaincash_offchain::{
+    contracts::{NOTE_CONTRACT, RECEIPT_CONTRACT, RESERVE_CONTRACT},
+    oracle::{buyback_nft, oracle_nft, BUYBACK_NFT, GOLD_ORACLE_NFT},
+};
 use ergo_client::node::{NodeClient, NodeError};
 use ergo_lib::{
     ergo_chain_types::blake2b256_hash,
@@ -26,9 +29,16 @@ impl Compiler {
     pub async fn reserve_contract(&self) -> Result<&ErgoTree, NodeError> {
         self.reserve_contract
             .get_or_try_init(|| async {
+                let is_mainnet = self.node.endpoints().root()?.info().await?.network == "mainnet";
+                let reserve_contract = RESERVE_CONTRACT
+                    .replace(GOLD_ORACLE_NFT, &String::from(oracle_nft(is_mainnet)))
+                    .replace(BUYBACK_NFT, &String::from(buyback_nft(is_mainnet)));
+                if is_mainnet {
+                    debug_assert_eq!(reserve_contract, RESERVE_CONTRACT);
+                }
                 self.node
                     .extensions()
-                    .compile_contract(RESERVE_CONTRACT)
+                    .compile_contract(&reserve_contract)
                     .await
             })
             .await

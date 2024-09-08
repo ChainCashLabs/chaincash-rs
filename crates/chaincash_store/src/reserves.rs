@@ -90,7 +90,7 @@ impl ReserveRepository {
         let mut conn = self.pool.get()?;
         let join = schema::reserves::table
             .inner_join(schema::ergo_boxes::table)
-            .filter(schema::reserves::owner.eq_any(pubkeys.into_iter().cloned().map(String::from)))
+            .filter(schema::reserves::owner.eq_any(pubkeys.iter().cloned().map(String::from)))
             .select((Reserve::as_select(), ErgoBox::as_select()))
             .load::<(Reserve, ErgoBox)>(&mut conn)?;
         // Panic here if parsing ReserveBox from database fails

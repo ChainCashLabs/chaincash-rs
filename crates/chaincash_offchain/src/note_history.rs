@@ -30,6 +30,8 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum NoteHistoryError {
+    #[error("(position, reserve id) not found in history")]
+    KeyNotFound,
     #[error("Attempted to insert duplicate reserve key for note")]
     DuplicateReserveKey,
     #[error("Couldn't restore ownership entry from ContextExtension")]
@@ -192,6 +194,25 @@ impl NoteHistory {
         self.prover().unwrap().digest().unwrap()[..]
             .try_into()
             .unwrap()
+    }
+    pub fn lookup_proof(
+        &self,
+        reserve_id: TokenId,
+        position: i64,
+    ) -> Result<SerializedAdProof, NoteHistoryError> {
+        let mut prover = self.prover()?;
+        let key = [
+            &(position).to_be_bytes()[..],
+            &reserve_id.sigma_serialize_bytes().unwrap()[..],
+        ]
+        .concat()
+        .into();
+        prover
+            .perform_one_operation(&Operation::Lookup(key))
+            .transpose()
+            .ok_or(NoteHistoryError::KeyNotFound)?
+            .map_err(|_| NoteHistoryError::KeyNotFound)?;
+        Ok(prover.generate_proof())
     }
     pub fn to_avltree(&self) -> AvlTreeData {
         let tree_flags = AvlTreeFlags::new(true, false, false);

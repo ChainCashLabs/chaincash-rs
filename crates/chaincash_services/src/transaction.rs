@@ -1,5 +1,6 @@
+use chaincash_offchain::oracle::{buyback_nft, oracle_nft};
 use chaincash_offchain::transactions::notes::{
-    mint_note_transaction, spend_note_transaction, MintNoteRequest, MintNoteResponse,
+    mint_note_transaction, redeem_note, spend_note_transaction, MintNoteRequest, MintNoteResponse,
     SignedMintNoteResponse, SignedSpendNoteResponse, SpendNoteResponse,
 };
 use chaincash_offchain::transactions::reserves::{
@@ -8,7 +9,9 @@ use chaincash_offchain::transactions::reserves::{
 };
 use chaincash_offchain::transactions::{TransactionError, TxContext};
 use chaincash_store::ChainCashStore;
+use ergo_client::node::endpoints::blockchain::IndexQuery;
 use ergo_client::node::NodeClient;
+use ergo_lib::chain::transaction::Transaction;
 use ergo_lib::ergo_chain_types::EcPoint;
 use ergo_lib::ergotree_ir::chain::ergo_box::box_value::BoxValue;
 use ergo_lib::ergotree_ir::chain::ergo_box::{box_value::BoxValueError, ErgoBox};
@@ -60,6 +63,12 @@ pub struct TopUpReserveRequest {
     /// ID of note in database
     reserve_id: TokenId,
     top_up_amount: u64,
+}
+
+#[derive(Deserialize)]
+pub struct RedeemNoteRequest {
+    note_id: i32,
+    reserve_id: TokenId,
 }
 
 #[derive(Clone)]
@@ -203,7 +212,7 @@ impl<'a> TransactionService<'a> {
             request.recipient_pubkey,
             *request.amount.as_u64(),
             wallet_boxes,
-            tx_context,
+            &tx_context,
         )?;
 
         let transaction = self.node.extensions().sign_and_submit(transaction).await?;
@@ -217,5 +226,63 @@ impl<'a> TransactionService<'a> {
             recipient_note,
             change_note,
         })
+    }
+
+    pub async fn redeem_note(
+        &self,
+        request: RedeemNoteRequest,
+    ) -> Result<Transaction, TransactionServiceError> {
+        let note_box = self.store.notes().get_note_box(request.note_id)?;
+        let reserve_box = self
+            .store
+            .reserves()
+            .get_reserve_by_identifier(&request.reserve_id)?;
+        let receipt_contract = self.compiler.receipt_contract().await?;
+        let is_mainnet = self.node.endpoints().root()?.info().await?.network == "mainnet";
+        let buyback_box = &self
+            .node
+            .endpoints()
+            .blockchain()?
+            .get_unspent_boxes_by_token_id(
+                &String::from(buyback_nft(is_mainnet)),
+                IndexQuery {
+                    offset: 0,
+                    limit: 1,
+                    sort_direction:
+                        ergo_client::node::endpoints::blockchain::SortDirection::Descending,
+                    include_unconfirmed: true,
+                },
+            )
+            .await?[0]
+            .ergo_box;
+        let wallet_boxes = self.node.extensions().get_utxos().await?;
+        let tx_context = self.get_tx_ctx().await?;
+        let oracle_box = &self
+            .node
+            .endpoints()
+            .blockchain()?
+            .get_unspent_boxes_by_token_id(
+                &String::from(oracle_nft(is_mainnet)),
+                IndexQuery {
+                    offset: 0,
+                    limit: 1,
+                    sort_direction:
+                        ergo_client::node::endpoints::blockchain::SortDirection::Descending,
+                    include_unconfirmed: true,
+                },
+            )
+            .await?[0]
+            .ergo_box;
+        let tx = redeem_note(
+            &note_box,
+            &reserve_box,
+            &oracle_box,
+            &buyback_box,
+            receipt_contract,
+            wallet_boxes,
+            &tx_context,
+        )?;
+        let tx = self.node.extensions().sign_and_submit(tx).await?;
+        Ok(tx)
     }
 }

@@ -4,7 +4,7 @@ use std::borrow::{BorrowMut, Cow};
 
 use diesel::{
     prelude::{AsChangeset, Insertable, Queryable},
-    ExpressionMethods, OptionalExtension, QueryDsl, RunQueryDsl, Selectable,
+    ExpressionMethods, QueryDsl, RunQueryDsl, Selectable,
 };
 
 use crate::{schema, ConnectionPool, Error};
@@ -56,9 +56,6 @@ impl ScanRepository {
         let mut conn = self.pool.get()?;
         diesel::insert_into(schema::scans::table)
             .values(scan)
-            .on_conflict(schema::scans::scan_type)
-            .do_update()
-            .set(scan)
             .returning(schema::scans::scan_id)
             .execute(conn.borrow_mut())?;
         Ok(())
@@ -70,11 +67,10 @@ impl ScanRepository {
             .execute(conn.borrow_mut())?;
         Ok(())
     }
-    pub fn scan_by_type(&self, scan_type: ScanType) -> Result<Option<Scan<'static>>, Error> {
+    pub fn scans_by_type(&self, scan_type: ScanType) -> Result<Vec<Scan<'static>>, Error> {
         let mut conn = self.pool.get()?;
         Ok(schema::scans::table
             .filter(schema::scans::scan_type.eq(scan_type.to_str()))
-            .first::<Scan<'_>>(conn.borrow_mut())
-            .optional()?)
+            .load::<Scan<'_>>(conn.borrow_mut())?)
     }
 }

@@ -4,7 +4,9 @@ pub mod reserves;
 use ergo_lib::{
     chain::ergo_box::box_builder::ErgoBoxCandidateBuilderError,
     ergotree_ir::chain::{
-        address::AddressEncoderError, ergo_box::box_value::BoxValueError, token::TokenAmountError,
+        address::AddressEncoderError,
+        ergo_box::box_value::BoxValueError,
+        token::{TokenAmountError, TokenId},
     },
     wallet::{box_selector::BoxSelectorError, tx_builder::TxBuilderError},
 };
@@ -55,6 +57,11 @@ pub enum TransactionError {
 
     #[error("Must top-up reserve with atleast 1 ERG, got {}", *.0 as f64 / 1_000_000_000.0)]
     TopUpAmountError(u64),
+
+    #[error(
+        "Attempted to redeem from reserve {0:?}, note does not include ownership entry for this reserve"
+    )]
+    ReserveEntryNotFound(TokenId),
 }
 
 pub struct TxContext {
