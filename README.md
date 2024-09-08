@@ -173,7 +173,7 @@ and amount is in nanoErgs (0.001 ERG in this example)
 
 result would be like
 ```json
-{"txId":"c9e30700a06d8df4cff0fe3e7bdade8cc94c9d0e896fa8c55594c2095f45a3dd","reserveNftId":"b61a829706031ceff786ab3c2efd6bb096c72e41ae63a5dec207c84fe65ba2be"}
+{"txId":"d2ccfce5c267d0f0fb51750d47ee966168611e40374e65df31aafba3abd954ef","reserveNftId":"0f44aa54140dbd5368b44358630d5ca4e38e6405f76bd987e18d7eae667915db"}
 ```
 
 so transaction id and reserve NFT id which will be used further to identify the reserve
@@ -191,8 +191,36 @@ send JSON via POST method like
 ``` 
 where `$pubkeyHex` is your public key, and `gold_amount_mg` is note value in milligrams of gold (1 gram in our example)
 
+* List notes you posses ( `http://127.0.0.1:8080/api/v1/notes/wallet` - GET method)
 
+* Spend a note ( `http://127.0.0.1:8080/api/v1/notes/spend` )
 
+send JSON via POST method like
+
+```json
+ {
+   "note_id": 1,
+   "reserve_id": "0f44aa54140dbd5368b44358630d5ca4e38e6405f76bd987e18d7eae667915db",
+   "recipient_pubkey": "02b8466784b34d5393a46b789f27b66f7fd34e1a06faf0d7941e204d71ead6ccdd",
+   "amount": 50
+ }
+```
+
+where note_id (the only new parameter in this request) is note id taken from results of previous API 
+method (`/notes/wallet`)
+
+* List notes possessed by a public key ( `http://127.0.0.1:8080/api/v1/notes/byPubkey/:pubkey` - GET method )
+
+* Redeem a note ( `http://127.0.0.1:8080/api/v1/notes/redeem` )
+
+send JSON via POST method like
+
+{
+    "note_id": 1,
+    "reserve_id": "0f44aa54140dbd5368b44358630d5ca4e38e6405f76bd987e18d7eae667915db"
+}
+
+* Get note acceptance rules ( `http://127.0.0.1:8080/api/v1/acceptance/` )
 
 [Discord badge]: https://img.shields.io/discord/668903786361651200?logo=discord&style=social
 [Discord link]: https://discord.gg/ergo-platform-668903786361651200
