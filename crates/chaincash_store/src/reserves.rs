@@ -6,6 +6,7 @@ use crate::Error;
 use chaincash_offchain::boxes::ReserveBoxSpec;
 use diesel::dsl::delete;
 use diesel::prelude::*;
+use ergo_lib::ergo_chain_types::EcPoint;
 use ergo_lib::ergotree_ir::chain;
 use ergo_lib::ergotree_ir::chain::ergo_box::BoxId;
 use ergo_lib::ergotree_ir::chain::token::TokenId;
@@ -82,10 +83,14 @@ impl ReserveRepository {
         .expect("Failed to parse ReserveBoxSpec from database"))
     }
 
-    pub fn reserve_boxes(&self) -> Result<Vec<ReserveBoxSpec>, Error> {
+    pub fn reserve_boxes_by_pubkeys(
+        &self,
+        pubkeys: &[EcPoint],
+    ) -> Result<Vec<ReserveBoxSpec>, Error> {
         let mut conn = self.pool.get()?;
         let join = schema::reserves::table
             .inner_join(schema::ergo_boxes::table)
+            .filter(schema::reserves::owner.eq_any(pubkeys.iter().cloned().map(String::from)))
             .select((Reserve::as_select(), ErgoBox::as_select()))
             .load::<(Reserve, ErgoBox)>(&mut conn)?;
         // Panic here if parsing ReserveBox from database fails

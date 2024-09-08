@@ -456,6 +456,7 @@ dependencies = [
  "chaincash_predicate",
  "chaincash_services",
  "chaincash_store",
+ "ergo-lib",
  "ergo_client",
  "hyper 0.14.30",
  "serde",
@@ -1084,7 +1085,7 @@ dependencies = [
 [[package]]
 name = "ergo_client"
 version = "0.1.0"
-source = "git+https://github.com/SethDusek/ergo_client.git#0160f8841cf20dbed08fb49909922b3d2203c8ad"
+source = "git+https://github.com/SethDusek/ergo_client.git#16c100946584ba3048dbd88b0fa71dce77ede7f4"
 dependencies = [
  "anyhow",
  "ergo-lib",

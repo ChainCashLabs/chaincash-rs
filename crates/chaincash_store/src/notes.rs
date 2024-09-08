@@ -9,7 +9,10 @@ use diesel::{
     BelongingToDsl, Connection, ExpressionMethods, OptionalExtension, QueryDsl, RunQueryDsl,
     Selectable, SelectableHelper,
 };
-use ergo_lib::ergotree_ir::chain::{self, ergo_box::BoxId, token::TokenId};
+use ergo_lib::{
+    ergo_chain_types::EcPoint,
+    ergotree_ir::chain::{self, ergo_box::BoxId, token::TokenId},
+};
 use serde::Serialize;
 
 use crate::{
@@ -170,9 +173,10 @@ impl NoteRepository {
             .transpose()
     }
 
-    pub fn notes(&self) -> Result<Vec<NoteWithHistory>, Error> {
+    pub fn notes_by_pubkeys(&self, pubkeys: &[EcPoint]) -> Result<Vec<NoteWithHistory>, Error> {
         let mut conn = self.pool.get()?;
         let notes = schema::notes::table
+            .filter(schema::notes::owner.eq_any(pubkeys.iter().cloned().map(String::from)))
             .select(Note::as_select())
             .load(conn.borrow_mut())?;
         Ok(OwnershipEntry::belonging_to(&notes)

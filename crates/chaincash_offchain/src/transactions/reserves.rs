@@ -148,7 +148,7 @@ mod test {
         let top_up_amount = 1_000_000_000;
         let private_key = DlogProverInput::random();
         let public_key = private_key.public_image().h;
-        let reserve = create_reserve(*public_key.clone());
+        let reserve = create_reserve(*public_key.clone(), 1_000_000_000);
         let context = TxContext {
             current_height: 0,
             change_address: NetworkAddress::new(

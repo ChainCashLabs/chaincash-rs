@@ -6,16 +6,14 @@ use chaincash_offchain::{
 };
 use chaincash_store::scans::ScanType;
 use ergo_client::node::{
-    endpoints::scan::{RegisteredScan, Scan, TrackingRule},
+    endpoints::scan::{RegisteredScan, Scan, ScanBox, TrackingRule},
     NodeClient, NodeError,
 };
 use ergo_lib::{
     chain::transaction::{ergo_transaction::ErgoTransaction, Transaction, TxId},
-    ergo_chain_types::EcPoint,
     ergotree_ir::{
         chain::{
-            address::Address,
-            ergo_box::{ErgoBox, NonMandatoryRegisterId, RegisterId},
+            ergo_box::{ErgoBox, RegisterId},
             token::TokenId,
         },
         ergo_tree::ErgoTree,
@@ -49,59 +47,28 @@ struct ContractScan<'a> {
 }
 
 impl<'a> ContractScan<'a> {
-    async fn new(
-        state: &ServerState,
-        scan_type: ScanType,
-        public_keys: &[EcPoint],
-    ) -> Result<Self, ScannerError> {
-        let (contract, register) = match scan_type {
-            ScanType::Reserves => (
-                state.compiler.reserve_contract().await?,
-                NonMandatoryRegisterId::R4,
-            ),
-            ScanType::Notes => (
-                state.compiler.note_contract().await?,
-                NonMandatoryRegisterId::R5,
-            ),
-            ScanType::Receipts => (
-                state.compiler.receipt_contract().await?,
-                NonMandatoryRegisterId::R7,
-            ),
+    async fn new(state: &ServerState, scan_type: ScanType) -> Result<Self, ScannerError> {
+        let contract = match scan_type {
+            ScanType::Reserves => state.compiler.reserve_contract().await?,
+            ScanType::Notes => state.compiler.note_contract().await?,
+            ScanType::Receipts => state.compiler.receipt_contract().await?,
         };
-        let scan = Self::pubkey_scan(
-            format!("Chaincash {} scan", scan_type.to_str()),
-            contract,
-            register,
-            public_keys,
-        );
+        let scan = Self::contract_scan(format!("Chaincash {} scan", scan_type.to_str()), contract);
         Ok(Self { scan_type, scan })
     }
 
-    fn pubkey_scan(
+    fn contract_scan(
         scan_name: impl Into<std::borrow::Cow<'a, str>>,
         contract: &ErgoTree,
-        pubkey_register: NonMandatoryRegisterId,
-        public_keys: &[EcPoint],
     ) -> Scan<'a> {
         Scan {
             scan_name: scan_name.into(),
             wallet_interaction: "off".into(),
             tracking_rule: TrackingRule::And {
-                args: vec![
-                    TrackingRule::Contains {
-                        register: Some(RegisterId::R1),
-                        value: contract.sigma_serialize_bytes().unwrap().into(),
-                    },
-                    TrackingRule::Or {
-                        args: public_keys
-                            .iter()
-                            .map(|pubkey| TrackingRule::Equals {
-                                register: Some(pubkey_register.into()),
-                                value: pubkey.clone().into(),
-                            })
-                            .collect(),
-                    },
-                ],
+                args: vec![TrackingRule::Contains {
+                    register: Some(RegisterId::R1),
+                    value: contract.sigma_serialize_bytes().unwrap().into(),
+                }],
             },
             remove_offchain: true,
         }
@@ -143,47 +110,69 @@ async fn get_transaction(
 
 // Load scans by type. If node changes then wrong scans will be detected and re-registered
 // Returns (needs_rescan, scan_type)
-async fn load_scan(
+async fn load_scan<'a>(
     state: &ServerState,
     scan_type: ScanType,
-    node_scans: &[RegisteredScan<'_>],
-) -> Result<(bool, i32), ScannerError> {
-    let addresses = state
-        .node
-        .endpoints()
-        .wallet()?
-        .get_addresses()
-        .await?
-        .into_iter()
-        .filter_map(|addr| match addr.address() {
-            Address::P2Pk(pk) => Some((*pk.h).clone()),
-            _ => None,
+    node_scans: &[RegisteredScan<'a>],
+) -> Result<(bool, Vec<i32>), ScannerError> {
+    let contract_scan = ContractScan::new(state, scan_type).await?;
+    let scans = state.store.scans().scans_by_type(scan_type)?;
+    let registered: Vec<_> = node_scans
+        .iter()
+        .filter(|node_scan| {
+            scans.iter().any(|scan| {
+                node_scan.scan_id == scan.scan_id as u32
+                    && node_scan.scan.scan_name == scan.scan_name
+            })
         })
-        .collect::<Vec<_>>();
-    let contract_scan = ContractScan::new(state, scan_type, &addresses).await?;
-    let scan = state.store.scans().scan_by_type(scan_type)?;
-    if let Some(scan) = scan {
-        if node_scans.iter().any(|node_scan| {
-            scan.scan_id as u32 == node_scan.scan_id
-                && scan.scan_name == node_scan.scan.scan_name
-                && node_scan.scan == contract_scan.scan
-        }) {
-            return Ok((false, scan.scan_id));
-        } else {
-            warn!("Scan {} invalidated, re-registering", scan.scan_id);
-        }
+        .collect();
+
+    if registered
+        .iter()
+        .any(|registered| registered.scan == contract_scan.scan)
+    {
+        return Ok((
+            false,
+            registered
+                .into_iter()
+                .map(|scan| scan.scan_id as i32)
+                .collect(),
+        ));
+    } else {
+        warn!("Scan invalidated, re-registering");
     }
+
     let scan_id = contract_scan.register(state).await?.scan_id;
-    Ok((true, scan_id))
+    Ok((
+        true,
+        registered
+            .into_iter()
+            .map(|scan| scan.scan_id as i32)
+            .chain(std::iter::once(scan_id))
+            .collect(),
+    ))
 }
 
-async fn reserve_scanner(state: Arc<ServerState>, scan_id: i32) -> Result<(), ScannerError> {
+async fn get_all_scan_boxes(
+    scan_ids: &[i32],
+    state: &ServerState,
+) -> Result<Vec<ScanBox>, ScannerError> {
+    let mut scan_boxes = vec![];
+    for scan in scan_ids {
+        scan_boxes.extend_from_slice(
+            &state
+                .node
+                .extensions()
+                .get_all_unspent_boxes(*scan as u32, false)
+                .await?,
+        );
+    }
+    Ok(scan_boxes)
+}
+
+async fn reserve_scanner(state: Arc<ServerState>, scan_ids: Vec<i32>) -> Result<(), ScannerError> {
     loop {
-        let scan_boxes = state
-            .node
-            .extensions()
-            .get_all_unspent_boxes(scan_id as u32, false)
-            .await?;
+        let scan_boxes = get_all_scan_boxes(&scan_ids, &state).await?;
         for scan_box in &scan_boxes {
             match ReserveBoxSpec::try_from(&scan_box.ergo_box) {
                 Ok(reserve_box) => {
@@ -280,14 +269,9 @@ async fn note_backward_scan(state: &ServerState, note_box: ErgoBox) -> Result<No
     Ok(note)
 }
 
-async fn note_scanner(state: Arc<ServerState>, scan_id: i32) -> Result<(), ScannerError> {
+async fn note_scanner(state: Arc<ServerState>, scan_ids: Vec<i32>) -> Result<(), ScannerError> {
     loop {
-        let scan_boxes = state
-            .node
-            .extensions()
-            .get_all_unspent_boxes(scan_id as u32, false)
-            .await
-            .unwrap();
+        let scan_boxes = get_all_scan_boxes(&scan_ids, &state).await.unwrap();
         for scan_box in &scan_boxes {
             let box_id = scan_box.ergo_box.box_id();
             if state
@@ -327,14 +311,14 @@ pub async fn start_scanner(state: Arc<ServerState>) -> Result<(), ScannerError> 
         panic!("/blockchain/indexedHeight failed. Please enable extra indexing: https://docs.ergoplatform.com/node/conf/conf-node/#extra-index");
     };
     let scans = state.node.endpoints().scan()?.list_all().await?;
-    let (mut needs_rescan, reserve_scan) = load_scan(&state, ScanType::Reserves, &scans).await?;
-    let (rescan, note_scan) = load_scan(&state, ScanType::Notes, &scans).await?;
+    let (mut needs_rescan, reserve_scans) = load_scan(&state, ScanType::Reserves, &scans).await?;
+    let (rescan, note_scans) = load_scan(&state, ScanType::Notes, &scans).await?;
     needs_rescan |= rescan;
     if needs_rescan {
         //Rescan from block #1,318_639. This height can be increased later when chaincash is deployed
         let _ = state.node.endpoints().wallet()?.rescan(1_318_639).await;
     }
-    tokio::spawn(reserve_scanner(state.clone(), reserve_scan));
-    tokio::spawn(note_scanner(state.clone(), note_scan));
+    tokio::spawn(reserve_scanner(state.clone(), reserve_scans));
+    tokio::spawn(note_scanner(state.clone(), note_scans));
     Ok(())
 }
