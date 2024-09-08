@@ -19,7 +19,7 @@ async fn mint_reserve(
         reserve_box,
         transaction,
     } = state.tx_service().mint_reserve(body).await?;
-    // store the reserver now or when it hits the chain? we probably need to track the box?
+    // store the reserve now or when it hits the chain? we probably need to track the box?
     let response = Json(json!({
         "txId": transaction.id(),
         "reserveNftId": reserve_box.identifier
