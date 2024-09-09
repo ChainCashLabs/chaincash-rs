@@ -3,7 +3,7 @@ url = "127.0.0.1"
 port = 8080
 
 [node]
-url = "http://localhost:9052"
+url = "http://localhost:9053"
 # hello is the default for nodes
 # in prod this should be set with CHAINCASH_NODE.API_KEY env var
 api_key = "hello"

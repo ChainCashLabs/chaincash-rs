@@ -90,8 +90,19 @@ For example, this could be configured like so:
 ```toml
 type = "whitelist"
 kind = "owner"
-agents = ["PK1", "OWNER2"]
+agents = ["030c8f9c4dc08f3c006fa85a47c9156dedbede000a8b764c6e374fd097e873ba04", "0216133993bbc54c0d48a21634a7d2632b8c92d744d565839dc39c912ef406e0d9"]
 ```
+
+`agents` here are public keys provided as encoded elliptic curve points. To obtain public key in such form from an 
+Ergo address, you can use `utils/addressToRaw` API method of an Ergo node, for example:
+
+```shell
+curl -X 'GET' \
+  'http://213.239.193.208:9053/utils/addressToRaw/9egnPnrYskFS8k1gYiKZEXZ2bhP9fvX9GZvsG1V3BzH3n8sBXrf' \
+  -H 'accept: application/json'
+```
+
+or use Swagger interface: [http://213.239.193.208:9053/swagger#/utils/AddressToRaw](http://213.239.193.208:9053/swagger#/utils/AddressToRaw).
 
 #### Blacklist
 
@@ -108,7 +119,7 @@ If we want to blacklist all notes issued by `PK1` this could be done like so:
 ```toml
 type = "blacklist"
 kind = "issuer"
-agents = ["PK1", "OWNER2"]
+agents = ["0216133993bbc54c0d48a21634a7d2632b8c92d744d565839dc39c912ef406e0d9", "030c8f9c4dc08f3c006fa85a47c9156dedbede000a8b764c6e374fd097e873ba04"]
 ```
 
 #### Collateral
@@ -136,11 +147,80 @@ For example, if we want to express that a note is accepted if the note is over c
 type = "or"
 conditions = [
     # the owner of the note is either PK1 or PK2
-    {type = "whitelist", kind = "owner", agents = ["PK1", "PK2"]},
+    {type = "whitelist", kind = "owner", agents = ["030c8f9c4dc08f3c006fa85a47c9156dedbede000a8b764c6e374fd097e873ba04"]},
     # the note has at least 100% collateral
     {type = "collateral", percent = 100}
 ]
 ```
+
+## API
+
+Following API methods are supported now (default URLs are provided, if you changed IP address or port, update URLs 
+accordingly):
+
+* Mint reserve ( `http://127.0.0.1:8080/api/v1/reserves/mint` )
+
+send JSON via POST method like 
+```json
+{
+   "public_key_hex": "$pubkeyHex",
+   "amount": 1000000
+}
+``` 
+
+where `$pubkeyHex` is your public key provided as encoded elliptic curve point (see how to get it above) , 
+and amount is in nanoErgs (0.001 ERG in this example)
+
+result would be like
+```json
+{"txId":"d2ccfce5c267d0f0fb51750d47ee966168611e40374e65df31aafba3abd954ef","reserveNftId":"0f44aa54140dbd5368b44358630d5ca4e38e6405f76bd987e18d7eae667915db"}
+```
+
+so transaction id and reserve NFT id which will be used further to identify the reserve
+
+* Get known reserves ( `http://127.0.0.1:8080/api/v1/reserves` - GET method )
+
+* Mint note ( `http://127.0.0.1:8080/api/v1/notes/mint` )
+
+send JSON via POST method like
+```json
+{
+  "owner_public_key_hex": "$pubkeyHex",
+  "gold_amount_mg": 1000
+}
+``` 
+where `$pubkeyHex` is your public key, and `gold_amount_mg` is note value in milligrams of gold (1 gram in our example)
+
+* List notes you posses ( `http://127.0.0.1:8080/api/v1/notes/wallet` - GET method)
+
+* Spend a note ( `http://127.0.0.1:8080/api/v1/notes/spend` )
+
+send JSON via POST method like
+
+```json
+ {
+   "note_id": 1,
+   "reserve_id": "0f44aa54140dbd5368b44358630d5ca4e38e6405f76bd987e18d7eae667915db",
+   "recipient_pubkey": "02b8466784b34d5393a46b789f27b66f7fd34e1a06faf0d7941e204d71ead6ccdd",
+   "amount": 50
+ }
+```
+
+where note_id (the only new parameter in this request) is note id taken from results of previous API 
+method (`/notes/wallet`)
+
+* List notes possessed by a public key ( `http://127.0.0.1:8080/api/v1/notes/byPubkey/:pubkey` - GET method )
+
+* Redeem a note ( `http://127.0.0.1:8080/api/v1/notes/redeem` )
+
+send JSON via POST method like
+
+{
+    "note_id": 1,
+    "reserve_id": "0f44aa54140dbd5368b44358630d5ca4e38e6405f76bd987e18d7eae667915db"
+}
+
+* Get note acceptance rules ( `http://127.0.0.1:8080/api/v1/acceptance/` )
 
 [Discord badge]: https://img.shields.io/discord/668903786361651200?logo=discord&style=social
 [Discord link]: https://discord.gg/ergo-platform-668903786361651200
