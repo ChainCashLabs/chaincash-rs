@@ -170,7 +170,13 @@ impl Note {
 #[derive(Serialize)]
 pub struct ReserveBoxSpec {
     pub owner: EcPoint,
-    pub refund_height: Option<i64>,
+    /// Height at which a refund was initiated (R5), `None` when no refund is pending.
+    ///
+    /// The reserve contract declares this register as `Int`, see the `init refund` action.
+    pub refund_height: Option<i32>,
+    /// Maximum amount (in nanoERG) the pending refund may withdraw (R6), `None` when no refund
+    /// is pending. Read by the contract as `SELF.R6[Long]` in the `complete refund` action.
+    pub refund_amount: Option<i64>,
     pub identifier: TokenId,
     #[serde(skip)]
     inner: ErgoBox,
@@ -182,6 +188,10 @@ impl ReserveBoxSpec {
     }
     pub fn ergo_box(&self) -> &ErgoBox {
         &self.inner
+    }
+    /// Whether a refund has been initiated on this reserve and not yet completed or cancelled.
+    pub fn refund_pending(&self) -> bool {
+        self.refund_height.is_some()
     }
 }
 
@@ -205,11 +215,24 @@ impl TryFrom<&ErgoBox> for ReserveBoxSpec {
         let refund_height = value
             .get_register(NonMandatoryRegisterId::R5.into())?
             .map(|reg| {
+                if reg.tpe == SType::SInt {
+                    Ok(reg.v.try_extract_into::<i32>().unwrap())
+                } else {
+                    Err(Error::InvalidType {
+                        field: "refund_height".to_owned(),
+                        tpe: reg.tpe,
+                    })
+                }
+            })
+            .transpose()?;
+        let refund_amount = value
+            .get_register(NonMandatoryRegisterId::R6.into())?
+            .map(|reg| {
                 if reg.tpe == SType::SLong {
                     Ok(reg.v.try_extract_into::<i64>().unwrap())
                 } else {
                     Err(Error::InvalidType {
-                        field: "refund_height".to_owned(),
+                        field: "refund_amount".to_owned(),
                         tpe: reg.tpe,
                     })
                 }
@@ -226,6 +249,7 @@ impl TryFrom<&ErgoBox> for ReserveBoxSpec {
         Ok(Self {
             owner,
             refund_height,
+            refund_amount,
             identifier,
             inner: value.clone(),
         })
