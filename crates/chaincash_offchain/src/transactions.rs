@@ -58,6 +58,22 @@ pub enum TransactionError {
     #[error("Must top-up reserve with atleast 1 ERG, got {}", *.0 as f64 / 1_000_000_000.0)]
     TopUpAmountError(u64),
 
+    #[error("Cannot refund {requested} nanoERG from a reserve holding {reserve_value} nanoERG")]
+    RefundAmountError { requested: u64, reserve_value: u64 },
+
+    #[error("Reserve {0:?} already has a refund pending, cancel it before starting another one")]
+    RefundAlreadyInitiated(TokenId),
+
+    #[error("Reserve {0:?} has no refund pending")]
+    RefundNotInitiated(TokenId),
+
+    #[error("Refund on reserve {reserve:?} is locked until height {unlock_height}, current height is {current_height}")]
+    RefundLocked {
+        reserve: TokenId,
+        unlock_height: u32,
+        current_height: u32,
+    },
+
     #[error(
         "Attempted to redeem from reserve {0:?}, note does not include ownership entry for this reserve"
     )]

@@ -222,5 +222,69 @@ send JSON via POST method like
 
 * Get note acceptance rules ( `http://127.0.0.1:8080/api/v1/acceptance/` )
 
+### Refunds
+
+A refund is how a reserve owner takes collateral back out. It is timelocked: announcing a refund
+starts a waiting period of 14400 blocks (about 20 days), during which the funds stay in the reserve
+and note holders can still redeem against it. Once the period is over the server completes the
+refund on its own, one check per block, so you do not have to come back for it.
+
+* Announce a refund ( `http://127.0.0.1:8080/api/v1/reserves/refund` )
+
+send JSON via POST method like
+
+```json
+{
+  "reserve_id": "0f44aa54140dbd5368b44358630d5ca4e38e6405f76bd987e18d7eae667915db",
+  "amount": 1000000
+}
+```
+
+where `amount` is in nanoErgs. Nothing is withdrawn yet - the transaction only writes the
+announcement into the reserve box. The result gives you the transaction id and the refund record,
+including `unlock_height`, the height from which the funds can be taken out:
+
+```json
+{
+  "txId": "d2ccfce5c267d0f0fb51750d47ee966168611e40374e65df31aafba3abd954ef",
+  "refund": {
+    "id": 1,
+    "reserve_id": "0f44aa54140dbd5368b44358630d5ca4e38e6405f76bd987e18d7eae667915db",
+    "amount": 1000000,
+    "init_height": 1318639,
+    "unlock_height": 1333039,
+    "status": "initiated",
+    "init_tx_id": "d2ccfce5c267d0f0fb51750d47ee966168611e40374e65df31aafba3abd954ef"
+  }
+}
+```
+
+A reserve can only have one refund pending at a time.
+
+* Cancel a pending refund ( `http://127.0.0.1:8080/api/v1/reserves/refund/cancel` )
+
+send JSON via POST method like
+
+```json
+{
+  "reserve_id": "0f44aa54140dbd5368b44358630d5ca4e38e6405f76bd987e18d7eae667915db"
+}
+```
+
+* Complete a pending refund now ( `http://127.0.0.1:8080/api/v1/reserves/refund/complete` )
+
+same request body as cancel. The server does this by itself once the waiting period is over; this
+is for when you would rather not wait for the next block to be scanned. It fails while the period
+is still running - and so would the contract, were the check skipped.
+
+The amount withdrawn is the announced one, capped at what the reserve can give up while remaining
+a valid box: a redemption may have drained it in the meantime, and the announced amount is only
+ever an upper bound as far as the contract is concerned. What actually left is reported as
+`withdrawn_amount`.
+
+* List past and current refunds ( `http://127.0.0.1:8080/api/v1/reserves/refunds` - GET method )
+
+newest first. Add `?reserve_id=$reserveNftId` to list the refunds of a single reserve.
+
 [Discord badge]: https://img.shields.io/discord/668903786361651200?logo=discord&style=social
 [Discord link]: https://discord.gg/ergo-platform-668903786361651200

@@ -90,6 +90,16 @@ pub fn create_wallet_box(public_key: EcPoint, amount: u64) -> ErgoBox {
 }
 
 pub fn create_reserve(public_key: EcPoint, amount: u64) -> ReserveBoxSpec {
+    create_reserve_with_refund(public_key, amount, None)
+}
+
+/// Reserve box with an optional pending refund, as written by the `init refund` action:
+/// R5 holds the initiation height and R6 the announced amount.
+pub fn create_reserve_with_refund(
+    public_key: EcPoint,
+    amount: u64,
+    pending_refund: Option<(i32, i64)>,
+) -> ReserveBoxSpec {
     let mut box_candidate = ErgoBoxCandidateBuilder::new(
         BoxValue::new(amount).unwrap(),
         AddressEncoder::new(ergo_lib::ergotree_ir::chain::address::NetworkPrefix::Mainnet)
@@ -100,6 +110,10 @@ pub fn create_reserve(public_key: EcPoint, amount: u64) -> ReserveBoxSpec {
         0,
     );
     box_candidate.set_register_value(NonMandatoryRegisterId::R4, public_key.into());
+    if let Some((refund_height, refund_amount)) = pending_refund {
+        box_candidate.set_register_value(NonMandatoryRegisterId::R5, refund_height.into());
+        box_candidate.set_register_value(NonMandatoryRegisterId::R6, refund_amount.into());
+    }
     box_candidate.add_token(Token {
         token_id: serde_json::from_str(
             "\"161A3A5250655368566D597133743677397A24432646294A404D635166546A57\"",

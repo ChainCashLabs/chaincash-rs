@@ -3,7 +3,7 @@ use std::sync::Arc;
 use chaincash_offchain::node::node_from_config;
 use chaincash_predicate::predicates::Predicate;
 use chaincash_server::Server;
-use chaincash_services::{scanner::start_scanner, ServerState};
+use chaincash_services::{refunds::start_refund_watcher, scanner::start_scanner, ServerState};
 use chaincash_store::{ChainCashStore, Update};
 use config::{Environment, File};
 use thiserror::Error;
@@ -89,6 +89,9 @@ impl ChainCashApp {
 
         let state = Arc::new(ServerState::new(node, store, predicates));
         start_scanner(state.clone()).await.unwrap();
+        // Refunds are timelocked: complete the ones whose waiting period elapsed while we were
+        // down, then keep settling them as they come due.
+        start_refund_watcher(state.clone());
         Ok(Server::serve(listener, state).await?)
     }
 }
