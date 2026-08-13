@@ -6,6 +6,7 @@ use ergo_lib::{ergo_chain_types::EcPoint, ergotree_ir::chain::address::Address};
 use transaction::{TransactionService, TransactionServiceError};
 
 pub mod compiler;
+pub mod refunds;
 pub mod scanner;
 pub mod transaction;
 
