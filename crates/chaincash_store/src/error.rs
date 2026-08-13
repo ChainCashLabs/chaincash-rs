@@ -13,4 +13,7 @@ pub enum Error {
 
     #[error("Failed to extract spec from box")]
     BoxSpec(#[from] chaincash_offchain::boxes::Error),
+
+    #[error("Stored identifier '{0}' is not a valid token id")]
+    InvalidTokenId(String),
 }
