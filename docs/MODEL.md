@@ -35,8 +35,23 @@ erDiagram
         int type "Type enum of the denomination, 0 = erg, 1 = gold"
         int nanoerg_per_unit "The conversion rate of this denomination in nanoergs"
     }
+    REFUND {
+        int id PK
+        string[32] reserve_identifier "Reserve NFT id the refund was announced on"
+        int amount "nanoErgs announced at initiation, the upper bound the contract enforces"
+        int withdrawn_amount "nanoErgs actually withdrawn, set once completed"
+        int init_height "Height written into R5 of the reserve box, the waiting period runs from here"
+        string status "initiated, completed or cancelled"
+        string[64] init_tx_id "Transaction that announced the refund"
+        string[64] settle_tx_id "Transaction that completed or cancelled it"
+    }
     NOTE ||--|{ OWNERSHIP_ENTRY : "has"
     NOTE ||--|| DENOMINATION : "has"
     NOTE ||--|| ERGO_BOX : "is a"
     RESERVE ||--|| ERGO_BOX : "is a"
 ```
+
+`REFUND` is deliberately not a foreign key onto `RESERVE`: a reserve row is deleted as soon as its
+box is spent, and the refund history has to outlive it. The reserve box carries the *pending*
+refund in its registers (R5 initiation height, R6 announced amount) and the contract treats that as
+the source of truth; the table adds the history the chain no longer keeps once a refund is settled.
